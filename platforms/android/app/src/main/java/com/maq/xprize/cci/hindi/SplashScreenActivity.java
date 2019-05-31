@@ -128,9 +128,8 @@ public class SplashScreenActivity extends Activity {
             _zip.close();
             toCallApplication();
         } catch (IOException ie) {
-            System.out.println(ie);
+            System.err.println(ie);
         }
-        return;
     }
 
     public String getExpansionFilePath() {

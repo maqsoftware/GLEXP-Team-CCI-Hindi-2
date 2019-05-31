@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maq.xprize.cci.hindi"
     android:hardwareAccelerated="true"
-    android:versionCode="10000"
+    android:versionCode="1"
     android:versionName="1.0.0">
 
     <supports-screens
