@@ -53,3 +53,4 @@ build/
 
 # Signing properties file
 release-signing.properties
+maqpublisher.keystore
