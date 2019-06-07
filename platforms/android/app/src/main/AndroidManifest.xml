@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maq.xprize.cci.hindi"
     android:hardwareAccelerated="true"
-    android:versionCode="1"
+    android:versionCode="2"
     android:versionName="1.0.0">
     <uses-sdk android:targetSdkVersion="28" />
 
@@ -39,28 +39,6 @@
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name="com.tonikorin.cordova.plugin.autostart.BootCompletedReceiver"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name="com.tonikorin.cordova.plugin.autostart.UserPresentReceiver"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.USER_PRESENT" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name="com.tonikorin.cordova.plugin.autostart.PackageReplacedReceiver"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
-
         <provider
             android:name="org.apache.cordova.camera.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -86,7 +64,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />

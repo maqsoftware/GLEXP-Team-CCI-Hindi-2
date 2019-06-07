@@ -19,27 +19,29 @@
 
 package com.maq.xprize.cci.hindi;
 
-import android.app.ActionBar;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
-import android.view.WindowManager;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 import org.apache.cordova.*;
-
-import java.io.File;
 
 public class MainActivity extends CordovaActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        super.init();
 
         // enable Cordova apps to be started in the background
         Bundle extras = getIntent().getExtras();
         if (extras != null && extras.getBoolean("cdvStartInBackground", false)) {
             moveTaskToBack(true);
         }
+
+        // web settings to set the correct view port
+        WebView webView = (WebView) appView.getView();
+        WebSettings settings = webView.getSettings();
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
 
         // updated the launchUrl value
         loadUrl(launchUrl);
