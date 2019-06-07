@@ -3,7 +3,7 @@
     package="com.maq.xprize.cci.hindi"
     android:hardwareAccelerated="true"
     android:versionCode="2"
-    android:versionName="1.0.0">
+    android:versionName="3.0.0">
     <uses-sdk android:targetSdkVersion="28" />
 
     <supports-screens
