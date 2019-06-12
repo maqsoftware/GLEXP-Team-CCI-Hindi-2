@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
@@ -38,10 +37,6 @@ public class SplashScreenActivity extends Activity {
     File packageDir;
     int mainFileVersion;
     int patchFileVersion;
-
-    public static String getDataFilePath() {
-        return "/storage/emulated/0/Android/data/com.maq.xprize.cci.hindi/files/";
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -138,6 +133,7 @@ public class SplashScreenActivity extends Activity {
 
     public void unzipFile() {
         int totalSize = getTotalSize();
+        String dataFilePath = "/storage/emulated/0/Android/data/" + getPackageName() + "/files/";
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
         mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), 0);
         patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), 0);
@@ -148,10 +144,9 @@ public class SplashScreenActivity extends Activity {
                     obbFile = new File(obbFilePath);
                     obbZipFile = new ZipFile(obbFile);
                     zipFileHandler = new Zip(obbZipFile, this);
-                    dataFilePath = getDataFilePath();
+                    dataFilePath = dataFilePath;
                     packageDir = new File(dataFilePath);
-                    if (xf.mIsMain && packageDir.exists()) {
-                        DownloadExpansionFile.deleteDir(packageDir);
+                    if (xf.mIsMain && !packageDir.exists()) {
                         packageDir.mkdir();
                     }
                     zipFileHandler.unzip(dataFilePath, totalSize, xf.mIsMain, xf.mFileVersion);
@@ -183,8 +178,7 @@ public class SplashScreenActivity extends Activity {
     }
 
     public String getObbFilePath(boolean isMain, int fileVersion) {
-        return Environment.getExternalStorageDirectory().toString() + "/Android/obb/" + Helpers.getPackageName(this) + File.separator +
-                Helpers.getExpansionAPKFileName(this, isMain, fileVersion);
+        return getObbDir() + File.separator + Helpers.getExpansionAPKFileName(this, isMain, fileVersion);
     }
 
     private class DownloadFile extends AsyncTask<String, Integer, String> {

@@ -5,7 +5,7 @@
     <string name="activity_name">@string/launcher_name</string>
     <string name="content_extraction">यह प्रक्रिया केवल एक बार की जाएगी। इसमें १० मिनट तक का समय लग सकता है।</string>
     <string name="splash_screen">Splash Screen</string>
-    <string name="_0">0 %</string>
+    <string name="startPercent">0 %</string>
     <string name="mainFileVersion">mainFileVersion</string>
     <string name="patchFileVersion">patchFileVersion</string>
 </resources>

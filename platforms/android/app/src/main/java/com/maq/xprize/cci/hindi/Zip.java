@@ -19,22 +19,22 @@ import static com.maq.xprize.cci.hindi.SplashScreenActivity.sharedPref;
 
 public class Zip {
 
-    private ZipFile zipFileHandlerFile;
+    private ZipFile zipFileHandler;
     private TextView percentText;
     private Activity zipActivity;
     private static int count = 0;
 
     public Zip(ZipFile zipFile, Activity _activity) {
-        this.zipFileHandlerFile = zipFile;
+        this.zipFileHandler = zipFile;
         zipActivity = _activity;
     }
 
     public Zip(String pathToZipFile) throws IOException {
-        this.zipFileHandlerFile = new ZipFile(pathToZipFile);
+        this.zipFileHandler = new ZipFile(pathToZipFile);
     }
 
     public void close() throws IOException {
-        zipFileHandlerFile.close();
+        zipFileHandler.close();
     }
 
     public void unzip(String extractPath, int totalZipSize, boolean isMain, int fileVersion) throws IOException {
@@ -59,7 +59,7 @@ public class Zip {
             throw new IOException("Unable to extract to a non-directory");
         }
 
-        Enumeration<? extends ZipEntry> zipEntries = zipFileHandlerFile.entries();
+        Enumeration<? extends ZipEntry> zipEntries = zipFileHandler.entries();
         progressBar = progressBar.findViewById(R.id.extraction_progress_bar);
 
         while (zipEntries.hasMoreElements()) {
@@ -79,7 +79,7 @@ public class Zip {
             zipEntry = zipEntries.nextElement();
             path = extractPath + zipEntry.getName();
             if (!zipEntry.isDirectory()) {
-                inputStream = new BufferedInputStream(zipFileHandlerFile.getInputStream(zipEntry));
+                inputStream = new BufferedInputStream(zipFileHandler.getInputStream(zipEntry));
 
                 outputFile = new File(path);
                 outputDir = new File(outputFile.getParent());

@@ -60,7 +60,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
             ),
             new XAPKFile(
                     false,
-                    2,
+                    0,
                     4910L
             )
     };
