@@ -33,7 +33,6 @@ public class SplashScreenActivity extends Activity {
     File obbFile;
     ZipFile obbZipFile;
     Zip zipFileHandler;
-    String dataFilePath;
     File packageDir;
     int mainFileVersion;
     int patchFileVersion;
@@ -71,7 +70,7 @@ public class SplashScreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
-        String flagFilePath = "/storage/emulated/0/Android/data/" + getPackageName() + "/files/.success.txt";
+        String flagFilePath = this.getExternalFilesDir(null)+ "/.success.txt";
         int defaultFileVersion = 0;
         File flagFile = new File(flagFilePath);
         boolean extractionRequired = false;
@@ -133,7 +132,6 @@ public class SplashScreenActivity extends Activity {
 
     public void unzipFile() {
         int totalSize = getTotalSize();
-        String dataFilePath = "/storage/emulated/0/Android/data/" + getPackageName() + "/files/";
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
         mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), 0);
         patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), 0);
@@ -144,12 +142,11 @@ public class SplashScreenActivity extends Activity {
                     obbFile = new File(obbFilePath);
                     obbZipFile = new ZipFile(obbFile);
                     zipFileHandler = new Zip(obbZipFile, this);
-                    dataFilePath = dataFilePath;
-                    packageDir = new File(dataFilePath);
+                    packageDir = this.getExternalFilesDir(null);
                     if (xf.mIsMain && !packageDir.exists()) {
                         packageDir.mkdir();
                     }
-                    zipFileHandler.unzip(dataFilePath, totalSize, xf.mIsMain, xf.mFileVersion);
+                    zipFileHandler.unzip(packageDir, totalSize, xf.mIsMain, xf.mFileVersion);
                     zipFileHandler.close();
                 }
             }

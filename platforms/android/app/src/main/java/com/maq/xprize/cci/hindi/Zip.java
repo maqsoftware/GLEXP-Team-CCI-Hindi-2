@@ -37,8 +37,7 @@ public class Zip {
         zipFileHandler.close();
     }
 
-    public void unzip(String extractPath, int totalZipSize, boolean isMain, int fileVersion) throws IOException {
-        File targetDir = new File(extractPath);
+    public void unzip(File targetDir, int totalZipSize, boolean isMain, int fileVersion) throws IOException {
         int percent;
         ProgressBar progressBar = zipActivity.findViewById(R.id.extraction_progress_bar);
         percentText = zipActivity.findViewById(R.id.mPercentText);
@@ -77,7 +76,7 @@ public class Zip {
             });
 
             zipEntry = zipEntries.nextElement();
-            path = extractPath + zipEntry.getName();
+            path = targetDir + zipEntry.getName();
             if (!zipEntry.isDirectory()) {
                 inputStream = new BufferedInputStream(zipFileHandler.getInputStream(zipEntry));
 
@@ -111,7 +110,7 @@ public class Zip {
         SharedPreferences.Editor editor = sharedPref.edit();
         if (isExtractionSuccessful) {
             if (isMain) {
-                flagFile = new File(extractPath + ".success.txt");
+                flagFile = new File(targetDir + ".success.txt");
                 flagFile.createNewFile();
                 editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
             } else {
