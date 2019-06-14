@@ -59,7 +59,7 @@
         android:layout_width="59dp"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="@string/_0"
+        android:text="@string/startPercent"
         android:textColor="@android:color/white"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/extraction_progress_bar"

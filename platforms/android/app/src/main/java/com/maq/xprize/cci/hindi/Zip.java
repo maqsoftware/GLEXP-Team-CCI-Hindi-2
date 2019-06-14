@@ -1,6 +1,7 @@
 package com.maq.xprize.cci.hindi;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -9,34 +10,35 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.maq.xprize.cci.hindi.SplashScreenActivity.sharedPref;
+
 public class Zip {
 
-    private ZipFile _zipFile;
+    private ZipFile zipFileHandler;
     private TextView percentText;
     private Activity zipActivity;
-    private static int percent = 0;
+    private static int count = 0;
 
     public Zip(ZipFile zipFile, Activity _activity) {
-        this._zipFile = zipFile;
+        this.zipFileHandler = zipFile;
         zipActivity = _activity;
     }
 
     public Zip(String pathToZipFile) throws IOException {
-        this._zipFile = new ZipFile(pathToZipFile);
+        this.zipFileHandler = new ZipFile(pathToZipFile);
     }
 
     public void close() throws IOException {
-        _zipFile.close();
+        zipFileHandler.close();
     }
 
-    public void unzip(String extractPath) throws IOException {
-        File targetDir = new File(extractPath);
-        int zipSize = _zipFile.size();
-        int count = 0;
+    public void unzip(File targetDir, int totalZipSize, boolean isMain, int fileVersion) throws IOException {
+        int percent;
         ProgressBar progressBar = zipActivity.findViewById(R.id.extraction_progress_bar);
         percentText = zipActivity.findViewById(R.id.mPercentText);
         String path;
@@ -56,32 +58,27 @@ public class Zip {
             throw new IOException("Unable to extract to a non-directory");
         }
 
-        Enumeration<? extends ZipEntry> zipEntries = _zipFile.entries();
+        Enumeration<? extends ZipEntry> zipEntries = zipFileHandler.entries();
         progressBar = progressBar.findViewById(R.id.extraction_progress_bar);
 
         while (zipEntries.hasMoreElements()) {
             ++count;
             // Calculate the percentage of extracted content
-            percent = (count * 100) / zipSize;
+            percent = (count * 100) / totalZipSize;
             // Sync the progress bar with percentage value
             progressBar.setProgress(percent);
             final int finalPercent = percent;
             zipActivity.runOnUiThread(new Runnable() {
                 public void run() {
                     // Show the percentage value on progress bar
-                    percentText.setText(finalPercent + " %");
+                    percentText.setText(MessageFormat.format("{0} %", finalPercent));
                 }
             });
 
             zipEntry = zipEntries.nextElement();
-            path = extractPath + zipEntry.getName();
-            if (zipEntry.isDirectory()) {
-                /*File newDir = new File(path);
-				if(!newDir.mkdirs()){
-					throw new IOException("Unable to extract the zip entry " + path);
-				}*/
-            } else {
-                inputStream = new BufferedInputStream(_zipFile.getInputStream(zipEntry));
+            path = targetDir.getPath() + "/" + zipEntry.getName();
+            if (!zipEntry.isDirectory()) {
+                inputStream = new BufferedInputStream(zipFileHandler.getInputStream(zipEntry));
 
                 outputFile = new File(path);
                 outputDir = new File(outputFile.getParent());
@@ -110,9 +107,16 @@ public class Zip {
                 }
             }
         }
+        SharedPreferences.Editor editor = sharedPref.edit();
         if (isExtractionSuccessful) {
-            flagFile = new File(extractPath + ".success.txt");
-            flagFile.createNewFile();
+            if (isMain) {
+                flagFile = new File(targetDir.getPath() +"/"+ ".success.txt");
+                flagFile.createNewFile();
+                editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
+            } else {
+                editor.putInt(zipActivity.getString(R.string.patchFileVersion), fileVersion);
+            }
+            editor.apply();
         }
     }
 }
