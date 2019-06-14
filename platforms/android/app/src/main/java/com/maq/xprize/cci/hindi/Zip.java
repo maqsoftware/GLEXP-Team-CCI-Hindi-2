@@ -76,7 +76,7 @@ public class Zip {
             });
 
             zipEntry = zipEntries.nextElement();
-            path = targetDir + zipEntry.getName();
+            path = targetDir.getPath() + "/" + zipEntry.getName();
             if (!zipEntry.isDirectory()) {
                 inputStream = new BufferedInputStream(zipFileHandler.getInputStream(zipEntry));
 

@@ -70,7 +70,7 @@ public class SplashScreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
-        String flagFilePath = this.getExternalFilesDir(null)+ "/.success.txt";
+        String flagFilePath = this.getExternalFilesDir(null).getPath()+ "/.success.txt";
         int defaultFileVersion = 0;
         File flagFile = new File(flagFilePath);
         boolean extractionRequired = false;
