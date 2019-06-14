@@ -110,7 +110,7 @@ public class Zip {
         SharedPreferences.Editor editor = sharedPref.edit();
         if (isExtractionSuccessful) {
             if (isMain) {
-                flagFile = new File(targetDir + ".success.txt");
+                flagFile = new File(targetDir.getPath() +"/"+ ".success.txt");
                 flagFile.createNewFile();
                 editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
             } else {
