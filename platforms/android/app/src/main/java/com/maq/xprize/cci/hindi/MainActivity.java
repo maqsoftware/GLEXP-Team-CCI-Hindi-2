@@ -19,7 +19,10 @@
 
 package com.maq.xprize.cci.hindi;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -38,10 +41,16 @@ public class MainActivity extends CordovaActivity {
         }
 
         // web settings to set the correct view port
-        WebView webView = (WebView) appView.getView();
-        WebSettings settings = webView.getSettings();
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
+        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        int width = display.getWidth();
+
+        // use the scale properties only if device is not Google Pixel C tab dimensions
+        if (width != 2560) {
+            WebView webView = (WebView) appView.getView();
+            WebSettings settings = webView.getSettings();
+            settings.setLoadWithOverviewMode(true);
+            settings.setUseWideViewPort(true);
+        }
 
         // updated the launchUrl value
         loadUrl(launchUrl);
