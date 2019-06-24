@@ -55,6 +55,7 @@ public class SplashScreenActivity extends Activity {
             break;
             case 2: {
                 // If request is cancelled, the result arrays are empty.
+                // Check user permission if the permission is explicitly removed by the user
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Intent intent = new Intent(this, MainActivity.class);
