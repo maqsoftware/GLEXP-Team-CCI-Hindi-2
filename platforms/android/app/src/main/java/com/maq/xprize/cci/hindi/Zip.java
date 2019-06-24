@@ -19,10 +19,10 @@ import static com.maq.xprize.cci.hindi.SplashScreenActivity.sharedPref;
 
 public class Zip {
 
+    private static int count = 0;
     private ZipFile zipFileHandler;
     private TextView percentText;
     private Activity zipActivity;
-    private static int count = 0;
 
     public Zip(ZipFile zipFile, Activity _activity) {
         this.zipFileHandler = zipFile;
