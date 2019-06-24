@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
 import java.util.zip.CRC32;
 
 
@@ -96,8 +97,8 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
     public static boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
+            for (String child : children) {
+                boolean success = deleteDir(new File(dir, child));
                 if (!success) {
                     return false;
                 }
@@ -125,7 +126,8 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
          * worth doing. (so no Market request is necessary)
          */
         if (!expansionFilesDelivered()) {
-            String pathname = this.getExternalFilesDir(null).toString() + File.separator + "audio";
+            String pathname;
+            pathname = Objects.requireNonNull(this.getExternalFilesDir(null)).toString() + File.separator + "audio";
 
             File deleteFolder = new File(pathname);
             if (deleteFolder.isDirectory()) {
@@ -162,7 +164,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                     // The DownloaderService has started downloading the files,
                     // show progress
                     initializeDownloadUI();
-                    return;
+
 
                 } // otherwise, download not needed so we fall through to
                 // starting the movie
@@ -523,7 +525,6 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
         mTimeRemaining.setText(getString(R.string.time_remaining,
                 Helpers.getTimeRemaining(progress.mTimeRemaining)));
 
-        progress.mOverallTotal = progress.mOverallTotal;
         mPB.setMax((int) (progress.mOverallTotal >> 8));
         mPB.setProgress((int) (progress.mOverallProgress >> 8));
         mProgressPercent.setText(progress.mOverallProgress

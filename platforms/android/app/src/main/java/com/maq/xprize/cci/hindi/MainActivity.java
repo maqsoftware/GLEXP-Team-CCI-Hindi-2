@@ -20,13 +20,13 @@
 package com.maq.xprize.cci.hindi;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Bundle;
-import android.view.Display;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import org.apache.cordova.*;
+import org.apache.cordova.CordovaActivity;
 
 public class MainActivity extends CordovaActivity {
     @Override
@@ -41,8 +41,10 @@ public class MainActivity extends CordovaActivity {
         }
 
         // web settings to set the correct view port
-        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int width = display.getWidth();
+        WindowManager windowManager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        Point sizeScreen = new Point();
+        windowManager.getDefaultDisplay().getRealSize(sizeScreen);
+        int width = sizeScreen.x;
 
         // use the scale properties only if device is not Google Pixel C tab dimensions
         if (width != 2560) {

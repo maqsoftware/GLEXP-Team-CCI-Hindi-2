@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -21,6 +20,7 @@ import com.google.android.vending.expansion.downloader.Helpers;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.zip.ZipFile;
 
 import static com.cci.DownloadExpansionFile.xAPKs;
@@ -70,7 +70,8 @@ public class SplashScreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
-        String flagFilePath = this.getExternalFilesDir(null).getPath()+ "/.success.txt";
+        String flagFilePath;
+        flagFilePath = Objects.requireNonNull(this.getExternalFilesDir(null)).getPath()+ "/.success.txt";
         int defaultFileVersion = 0;
         File flagFile = new File(flagFilePath);
         boolean extractionRequired = false;
@@ -101,15 +102,10 @@ public class SplashScreenActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        if (Build.VERSION.SDK_INT < 19) { // lower api
-            View v = this.getWindow().getDecorView();
-            v.setSystemUiVisibility(View.GONE);
-        } else {
-            //for new api versions.
-            View decorView = this.getWindow().getDecorView();
-            int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-            decorView.setSystemUiVisibility(uiOptions);
-        }
+        //for new api versions.
+        View decorView = this.getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        decorView.setSystemUiVisibility(uiOptions);
         setContentView(R.layout.activity_splash_screen);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED ||
@@ -143,9 +139,8 @@ public class SplashScreenActivity extends Activity {
                     obbZipFile = new ZipFile(obbFile);
                     zipFileHandler = new Zip(obbZipFile, this);
                     packageDir = this.getExternalFilesDir(null);
-                    if (xf.mIsMain && !packageDir.exists()) {
-                        packageDir.mkdir();
-                    }
+                    assert packageDir != null;
+                    if (xf.mIsMain && !packageDir.exists()) packageDir.mkdir();
                     zipFileHandler.unzip(packageDir, totalSize, xf.mIsMain, xf.mFileVersion);
                     zipFileHandler.close();
                 }
