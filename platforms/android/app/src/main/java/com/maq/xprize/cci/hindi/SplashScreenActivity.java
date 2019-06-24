@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
@@ -17,7 +19,6 @@ import android.widget.Toast;
 
 import com.cci.DownloadExpansionFile;
 import com.google.android.vending.expansion.downloader.Helpers;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -70,32 +71,27 @@ public class SplashScreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
-        String flagFilePath = this.getExternalFilesDir(null).getPath()+ "/.success.txt";
         int defaultFileVersion = 0;
-        File flagFile = new File(flagFilePath);
-        boolean extractionRequired = false;
-        if (!flagFile.exists()) {
+
+        // Retrieve the stored values of main and patch file version
+        mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), defaultFileVersion);
+        patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), defaultFileVersion);
+        boolean isExtractionRequired = isExpansionExtractionRequired(mainFileVersion, patchFileVersion);
+        if (mainFileVersion == 0 && patchFileVersion == 0) {
+            // set the default file version if the extraction across for the first time
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putInt(getString(R.string.mainFileVersion), defaultFileVersion);
             editor.putInt(getString(R.string.patchFileVersion), defaultFileVersion);
             editor.apply();
-            extractionRequired = !flagFile.exists();
-        } else {
-            int mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), defaultFileVersion);
-            int patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), defaultFileVersion);
-            for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
-                if ((xf.mIsMain && xf.mFileVersion != mainFileVersion) || (!xf.mIsMain && xf.mFileVersion != patchFileVersion)) {
-                    extractionRequired = true;
-                    break;
-                }
+        } else if (!isExtractionRequired) {
+            // if extraction done start the WebView
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
+            } else {
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                finish();
             }
-        }
-
-        // call main activity if extraction done
-        if (!extractionRequired) {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-            finish();
         }
 
         super.onCreate(savedInstanceState);
@@ -132,9 +128,6 @@ public class SplashScreenActivity extends Activity {
 
     public void unzipFile() {
         int totalSize = getTotalSize();
-        sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
-        mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), 0);
-        patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), 0);
         try {
             for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
                 if (xf.mIsMain && xf.mFileVersion != mainFileVersion || !xf.mIsMain && xf.mFileVersion != patchFileVersion) {
@@ -156,6 +149,17 @@ public class SplashScreenActivity extends Activity {
         }
     }
 
+    public boolean isStorageSpaceAvailable() {
+        long totalExpansionFileSize = 0;
+        File internalStorageDir = Environment.getDataDirectory();
+        for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
+            if (xf.mIsMain && xf.mFileVersion != mainFileVersion || !xf.mIsMain && xf.mFileVersion != patchFileVersion) {
+                totalExpansionFileSize = xf.mFileSize;
+            }
+        }
+        return totalExpansionFileSize < internalStorageDir.getFreeSpace();
+    }
+
     public int getTotalSize() {
         int totalSize = 0;
         try {
@@ -174,6 +178,16 @@ public class SplashScreenActivity extends Activity {
         return totalSize;
     }
 
+    private boolean isExpansionExtractionRequired(int storedMainFileVersion, int storedPatchFileVersion) {
+        for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
+            // If main or patch file is updated set isExtractionRequired to true
+            if (xf.mIsMain && xf.mFileVersion != storedMainFileVersion || !xf.mIsMain && xf.mFileVersion != storedPatchFileVersion) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getObbFilePath(boolean isMain, int fileVersion) {
         return getObbDir() + File.separator + Helpers.getExpansionAPKFileName(this, isMain, fileVersion);
     }
@@ -181,7 +195,23 @@ public class SplashScreenActivity extends Activity {
     private class DownloadFile extends AsyncTask<String, Integer, String> {
         @Override
         protected String doInBackground(String... sUrl) {
-            unzipFile();
+            // unzip if storage space available
+            if (isStorageSpaceAvailable()) {
+                unzipFile();
+            } else {
+                SplashScreenActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(SplashScreenActivity.this, "Insufficient storage space! Please free up your storage to use this application.", Toast.LENGTH_LONG).show();
+                        // Call finish after the toast message disappears
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                SplashScreenActivity.this.finish();
+                            }
+                        }, Toast.LENGTH_LONG);
+                    }
+                });
+            }
             return null;
         }
     }

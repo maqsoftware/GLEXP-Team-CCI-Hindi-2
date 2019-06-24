@@ -45,7 +45,6 @@ public class Zip {
         ZipEntry zipEntry;
         File outputFile;
         File outputDir;
-        File flagFile;
         BufferedInputStream inputStream;
         BufferedOutputStream outputStream;
         boolean isExtractionSuccessful = false;
@@ -110,8 +109,6 @@ public class Zip {
         SharedPreferences.Editor editor = sharedPref.edit();
         if (isExtractionSuccessful) {
             if (isMain) {
-                flagFile = new File(targetDir.getPath() +"/"+ ".success.txt");
-                flagFile.createNewFile();
                 editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
             } else {
                 editor.putInt(zipActivity.getString(R.string.patchFileVersion), fileVersion);

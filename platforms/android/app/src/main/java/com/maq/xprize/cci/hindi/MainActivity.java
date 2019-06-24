@@ -26,7 +26,7 @@ import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import org.apache.cordova.*;
+import org.apache.cordova.CordovaActivity;
 
 public class MainActivity extends CordovaActivity {
     @Override
