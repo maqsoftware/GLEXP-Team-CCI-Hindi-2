@@ -28,14 +28,11 @@ import static com.cci.DownloadExpansionFile.xAPKs;
 
 public class SplashScreenActivity extends Activity {
     public static SharedPreferences sharedPref;
-    Intent intent = null;
-    String obbFilePath;
-    File obbFile;
-    ZipFile obbZipFile;
-    Zip zipFileHandler;
-    File packageDir;
-    int mainFileVersion;
-    int patchFileVersion;
+    private String obbFilePath;
+    private File obbFile;
+    private ZipFile obbZipFile;
+    private int mainFileVersion;
+    private int patchFileVersion;
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -120,13 +117,13 @@ public class SplashScreenActivity extends Activity {
     }
 
     /* function to call the main application after extraction */
-    public void toCallApplication() {
-        intent = new Intent(this, MainActivity.class);
+    private void toCallApplication() {
+        Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
         finish();
     }
 
-    public void unzipFile() {
+    private void unzipFile() {
         int totalSize = getTotalSize();
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
         mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), 0);
@@ -137,8 +134,8 @@ public class SplashScreenActivity extends Activity {
                     obbFilePath = getObbFilePath(xf.mIsMain, xf.mFileVersion);
                     obbFile = new File(obbFilePath);
                     obbZipFile = new ZipFile(obbFile);
-                    zipFileHandler = new Zip(obbZipFile, this);
-                    packageDir = this.getExternalFilesDir(null);
+                    Zip zipFileHandler = new Zip(obbZipFile, this);
+                    File packageDir = this.getExternalFilesDir(null);
                     assert packageDir != null;
                     if (xf.mIsMain && !packageDir.exists()) packageDir.mkdir();
                     zipFileHandler.unzip(packageDir, totalSize, xf.mIsMain, xf.mFileVersion);
@@ -151,7 +148,7 @@ public class SplashScreenActivity extends Activity {
         }
     }
 
-    public int getTotalSize() {
+    private int getTotalSize() {
         int totalSize = 0;
         try {
             for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
@@ -169,7 +166,7 @@ public class SplashScreenActivity extends Activity {
         return totalSize;
     }
 
-    public String getObbFilePath(boolean isMain, int fileVersion) {
+    private String getObbFilePath(boolean isMain, int fileVersion) {
         return getObbDir() + File.separator + Helpers.getExpansionAPKFileName(this, isMain, fileVersion);
     }
 

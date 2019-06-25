@@ -17,7 +17,7 @@ import java.util.zip.ZipFile;
 
 import static com.maq.xprize.cci.hindi.SplashScreenActivity.sharedPref;
 
-public class Zip {
+class Zip {
 
     private ZipFile zipFileHandler;
     private TextView percentText;
@@ -29,9 +29,11 @@ public class Zip {
         zipActivity = _activity;
     }
 
+    /*
     public Zip(String pathToZipFile) throws IOException {
         this.zipFileHandler = new ZipFile(pathToZipFile);
     }
+    */
 
     public void close() throws IOException {
         zipFileHandler.close();
@@ -68,11 +70,9 @@ public class Zip {
             // Sync the progress bar with percentage value
             progressBar.setProgress(percent);
             final int finalPercent = percent;
-            zipActivity.runOnUiThread(new Runnable() {
-                public void run() {
-                    // Show the percentage value on progress bar
-                    percentText.setText(MessageFormat.format("{0} %", finalPercent));
-                }
+            zipActivity.runOnUiThread(() -> {
+                // Show the percentage value on progress bar
+                percentText.setText(MessageFormat.format("{0} %", finalPercent));
             });
 
             zipEntry = zipEntries.nextElement();
@@ -111,8 +111,8 @@ public class Zip {
         if (isExtractionSuccessful) {
             if (isMain) {
                 flagFile = new File(targetDir.getPath() +"/"+ ".success.txt");
-                flagFile.createNewFile();
-                editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
+                boolean isFileCreated=flagFile.createNewFile();
+                if(isFileCreated) editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
             } else {
                 editor.putInt(zipActivity.getString(R.string.patchFileVersion), fileVersion);
             }
