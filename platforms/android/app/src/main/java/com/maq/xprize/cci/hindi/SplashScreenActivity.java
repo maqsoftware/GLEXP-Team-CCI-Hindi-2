@@ -226,7 +226,7 @@ public class SplashScreenActivity extends Activity {
         }
         setContentView(R.layout.activity_splash_screen);
 
-        // is SD card available show Dialog
+        // if SD card available show Dialog to ask for user preference
         if (isSDcard()) {
             flagSwitchToInternal = true;
             Dialog builder = sdCardPreferenceDialog();
