@@ -44,8 +44,8 @@ public class MainActivity extends CordovaActivity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
 
+        // update file path as per the storage preference
         launchUrl = "file:///" + SplashScreenActivity.assetsPath + File.separator + "www/index.html";
-        // updated the launchUrl value
         loadUrl(launchUrl);
     }
 }

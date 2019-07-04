@@ -105,6 +105,7 @@ public class SplashScreenActivity extends Activity {
     }
 
     private void startExtraction() {
+        // check for permission and start extraction
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
@@ -270,7 +271,7 @@ public class SplashScreenActivity extends Activity {
 
     public boolean isStorageSpaceAvailable() {
         long totalExpansionFileSize = 0;
-        // check the storgae space for the asset path selected previously
+        // check the storage space of the asset path selected
         File internalStorageDir = new File(assetsPath);
         for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
             if (xf.mIsMain && xf.mFileVersion != mainFileVersion || !xf.mIsMain && xf.mFileVersion != patchFileVersion) {
