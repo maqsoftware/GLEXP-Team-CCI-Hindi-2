@@ -227,10 +227,12 @@ public class SplashScreenActivity extends Activity {
         setContentView(R.layout.activity_splash_screen);
 
         // if SD card available show Dialog to ask for user preference
-        if (isSDcard()) {
+        if (isSDcard() && mainFileVersion == 0) {
             flagSwitchToInternal = true;
             Dialog builder = sdCardPreferenceDialog();
             builder.show();
+        } else if (isSDcard() && sharedPref.getInt("dataPath", 0) == 2) {
+            startExtraction();
         } else {
             final SharedPreferences.Editor editor = sharedPref.edit();
             editor.putInt("dataPath", 1);
