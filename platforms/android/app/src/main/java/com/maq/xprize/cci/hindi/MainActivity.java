@@ -25,6 +25,8 @@ import android.webkit.WebView;
 
 import org.apache.cordova.CordovaActivity;
 
+import java.io.File;
+
 public class MainActivity extends CordovaActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,7 +44,8 @@ public class MainActivity extends CordovaActivity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
 
-        // updated the launchUrl value
+        // update file path as per the storage preference
+        launchUrl = "file:///" + SplashScreenActivity.assetsPath + File.separator + "www/index.html";
         loadUrl(launchUrl);
     }
 }

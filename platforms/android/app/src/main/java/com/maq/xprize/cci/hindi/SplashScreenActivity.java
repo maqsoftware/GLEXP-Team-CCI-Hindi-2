@@ -2,6 +2,9 @@ package com.maq.xprize.cci.hindi;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -29,14 +32,16 @@ import static com.cci.DownloadExpansionFile.xAPKs;
 
 public class SplashScreenActivity extends Activity {
     public static SharedPreferences sharedPref;
+    public static String assetsPath;
     Intent intent = null;
-    String obbFilePath;
+    String unzipDataFilePath;
     File obbFile;
     ZipFile obbZipFile;
     Zip zipFileHandler;
     File packageDir;
     int mainFileVersion;
     int patchFileVersion;
+    boolean flagSwitchToInternal = false;
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -69,6 +74,109 @@ public class SplashScreenActivity extends Activity {
         }
     }
 
+    // Method to check if SD card is mounted
+    public boolean isSDcard() {
+        File[] fileList = getObbDirs();
+        return fileList.length >= 2;
+    }
+
+    public Dialog sdCardPreferenceDialog() {
+        final SharedPreferences.Editor editor = sharedPref.edit();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setMessage(R.string.dialogInfo)
+                .setPositiveButton(R.string.dialogYes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        editor.putInt(getString(R.string.dataPath), 2);
+                        editor.apply();
+                        startExtraction();
+                    }
+                })
+                .setNegativeButton(R.string.dialogNo, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        editor.putInt(getString(R.string.dataPath), 1);
+                        editor.apply();
+                        startExtraction();
+                    }
+                });
+        return builder.create();
+    }
+
+    private void startExtraction() {
+        // check for permission and start extraction
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        } else {
+            new DownloadFile().execute(null, null, null);
+        }
+    }
+
+    public String getDataFilePath() {
+        String internalDataFilePath = null;
+        String externalDataFilePath = null;
+        String dataFilePath = null;
+        File[] fileList = getExternalFilesDirs(null);
+        for (File file : fileList) {
+            if (!file.getAbsolutePath().equalsIgnoreCase(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/" + getPackageName() + "/files") &&
+                    file.isDirectory() &&
+                    file.canRead() &&
+                    isSDcard() &&
+                    sharedPref.getInt(getString(R.string.dataPath), 0) == 2) {
+                // For external storage path
+                externalDataFilePath = file.getAbsolutePath();
+            } else if ((sharedPref.getInt(getString(R.string.dataPath), 0) == 1 || !flagSwitchToInternal) && internalDataFilePath == null) {
+                // For internal storage path
+                internalDataFilePath = file.getAbsolutePath();
+            }
+        }
+
+        if (sharedPref.getInt(getString(R.string.dataPath), 0) == 2) {
+            dataFilePath = externalDataFilePath;
+        } else if (externalDataFilePath == null) {
+            dataFilePath = internalDataFilePath;
+        }
+        assetsPath = dataFilePath;
+        return dataFilePath;
+    }
+
+    public File getOBBFilePath(DownloadExpansionFile.XAPKFile xf) {
+        sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
+        mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), 0);
+        patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), 0);
+        String internalOBBFilePath = null;
+        String externalOBBFilePath = null;
+        File externalOBBFile = null;
+        File internalOBBFile = null;
+        File[] fileList = getObbDirs();
+        for (File file : fileList) {
+            if (!file.getAbsolutePath().equalsIgnoreCase(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/obb/" + getPackageName()) &&
+                    file.isDirectory() &&
+                    file.canRead() &&
+                    isSDcard()) {
+                // For external storage path
+                externalOBBFilePath = file.getAbsolutePath() + File.separator +
+                        Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
+                externalOBBFile = new File(externalOBBFilePath);
+            } else {
+                // For internal storage path
+                internalOBBFilePath = file.getAbsolutePath() + File.separator +
+                        Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
+                internalOBBFile = new File(internalOBBFilePath);
+            }
+        }
+        /*
+         * Check for OBB file in both internal and external storage and choose internal storage path if file is not available in external storage.
+         * externalOBBFile is null only when internal storage is available
+         */
+        if (externalOBBFile != null && externalOBBFile.exists()) {
+            return externalOBBFile;
+        }
+        return internalOBBFile;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPref = getSharedPreferences("ExpansionFile", MODE_PRIVATE);
@@ -77,22 +185,31 @@ public class SplashScreenActivity extends Activity {
         // Retrieve the stored values of main and patch file version
         mainFileVersion = sharedPref.getInt(getString(R.string.mainFileVersion), defaultFileVersion);
         patchFileVersion = sharedPref.getInt(getString(R.string.patchFileVersion), defaultFileVersion);
-        boolean isExtractionRequired = isExpansionExtractionRequired(mainFileVersion, patchFileVersion);
-        if (mainFileVersion == 0 && patchFileVersion == 0) {
+        boolean isExtractionRequired = false;
+
+        getDataFilePath();
+        if (sharedPref.getInt("dataPath", 0) == 0) {
             // set the default file version if the extraction across for the first time
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putInt(getString(R.string.mainFileVersion), defaultFileVersion);
             editor.putInt(getString(R.string.patchFileVersion), defaultFileVersion);
             editor.apply();
-        } else if (!isExtractionRequired) {
+            isExtractionRequired = true;
+        } else {
+            for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
+                // If main or patch file is updated set isExtractionRequired to true
+                if (xf.mIsMain && xf.mFileVersion != mainFileVersion || !xf.mIsMain && xf.mFileVersion != patchFileVersion) {
+                    isExtractionRequired = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isExtractionRequired) {
             // if extraction done start the WebView
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
-            } else {
-                Intent intent = new Intent(this, MainActivity.class);
-                startActivity(intent);
-                finish();
-            }
+            } else toCallApplication();
         }
 
         super.onCreate(savedInstanceState);
@@ -108,15 +225,20 @@ public class SplashScreenActivity extends Activity {
             decorView.setSystemUiVisibility(uiOptions);
         }
         setContentView(R.layout.activity_splash_screen);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
+        // if SD card available show Dialog to ask for user preference
+        if (isSDcard() && mainFileVersion == 0) {
+            flagSwitchToInternal = true;
+            Dialog builder = sdCardPreferenceDialog();
+            builder.show();
+        } else if (isSDcard() && sharedPref.getInt("dataPath", 0) == 2) {
+            // start extraction with the previous preference selected for OBB updates
+            startExtraction();
         } else {
-            new DownloadFile().execute(null, null, null);
+            final SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt("dataPath", 1);
+            editor.apply();
+            startExtraction();
         }
     }
 
@@ -132,11 +254,11 @@ public class SplashScreenActivity extends Activity {
         try {
             for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
                 if (xf.mIsMain && xf.mFileVersion != mainFileVersion || !xf.mIsMain && xf.mFileVersion != patchFileVersion) {
-                    obbFilePath = getObbFilePath(xf.mIsMain, xf.mFileVersion);
-                    obbFile = new File(obbFilePath);
+                    obbFile = getOBBFilePath(xf);
                     obbZipFile = new ZipFile(obbFile);
                     zipFileHandler = new Zip(obbZipFile, this);
-                    packageDir = this.getExternalFilesDir(null);
+                    unzipDataFilePath = getDataFilePath();
+                    packageDir = new File(unzipDataFilePath);
                     if (xf.mIsMain && !packageDir.exists()) {
                         packageDir.mkdir();
                     }
@@ -152,7 +274,8 @@ public class SplashScreenActivity extends Activity {
 
     public boolean isStorageSpaceAvailable() {
         long totalExpansionFileSize = 0;
-        File internalStorageDir = Environment.getDataDirectory();
+        // check the storage space of the asset path selected
+        File internalStorageDir = new File(assetsPath);
         for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
             if (xf.mIsMain && xf.mFileVersion != mainFileVersion || !xf.mIsMain && xf.mFileVersion != patchFileVersion) {
                 totalExpansionFileSize = xf.mFileSize;
@@ -166,8 +289,7 @@ public class SplashScreenActivity extends Activity {
         try {
             for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
                 if (!xf.mIsMain && (xf.mFileVersion != patchFileVersion) || xf.mIsMain && (xf.mFileVersion != mainFileVersion)) {
-                    obbFilePath = getObbFilePath(xf.mIsMain, xf.mFileVersion);
-                    obbFile = new File(obbFilePath);
+                    obbFile = getOBBFilePath(xf);
                     obbZipFile = new ZipFile(obbFile);
                     totalSize += obbZipFile.size();
 
@@ -177,20 +299,6 @@ public class SplashScreenActivity extends Activity {
             System.out.println(ie);
         }
         return totalSize;
-    }
-
-    private boolean isExpansionExtractionRequired(int storedMainFileVersion, int storedPatchFileVersion) {
-        for (DownloadExpansionFile.XAPKFile xf : xAPKs) {
-            // If main or patch file is updated set isExtractionRequired to true
-            if (xf.mIsMain && xf.mFileVersion != storedMainFileVersion || !xf.mIsMain && xf.mFileVersion != storedPatchFileVersion) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public String getObbFilePath(boolean isMain, int fileVersion) {
-        return getObbDir() + File.separator + Helpers.getExpansionAPKFileName(this, isMain, fileVersion);
     }
 
     private class DownloadFile extends AsyncTask<String, Integer, String> {
