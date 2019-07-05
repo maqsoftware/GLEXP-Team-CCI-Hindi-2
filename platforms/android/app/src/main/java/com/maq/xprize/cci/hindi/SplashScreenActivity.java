@@ -232,6 +232,7 @@ public class SplashScreenActivity extends Activity {
             Dialog builder = sdCardPreferenceDialog();
             builder.show();
         } else if (isSDcard() && sharedPref.getInt("dataPath", 0) == 2) {
+            // start extraction with the previous preference selected for OBB updates
             startExtraction();
         } else {
             final SharedPreferences.Editor editor = sharedPref.edit();
