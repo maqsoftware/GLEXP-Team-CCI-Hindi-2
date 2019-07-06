@@ -3,9 +3,14 @@
     <string name="app_name">सीसीआई - CCI</string>
     <string name="launcher_name">@string/app_name</string>
     <string name="activity_name">@string/launcher_name</string>
-    <string name="content_extraction">यह प्रक्रिया केवल एक बार की जाएगी। इसमें १० मिनट तक का समय लग सकता है।</string>
+    <string name="content_extraction_hindi">यह प्रक्रिया केवल एक बार की जाएगी। इसमें १० मिनट तक का समय लग सकता है।</string>
+    <string name="content_extraction_english">This process will be done only once. It can take up to 10 minutes.</string>
     <string name="splash_screen">Splash Screen</string>
     <string name="startPercent">0 %</string>
     <string name="mainFileVersion">mainFileVersion</string>
     <string name="patchFileVersion">patchFileVersion</string>
+    <string name="dataPath">dataPath</string>
+    <string name="dialogInfo">\nDo you want to save app data in your SD card?\n\nक्या आप मेमरी कार्ड में ऐप को डालना चाहते है?</string>
+    <string name="dialogNo">No\nनहीं</string>
+    <string name="dialogYes">Yes\nहाँ</string>
 </resources>
