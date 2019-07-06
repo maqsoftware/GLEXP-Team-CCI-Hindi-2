@@ -31,6 +31,7 @@ import java.io.File;
 
 public class MainActivity extends CordovaActivity {
     AudioManager audioManager;                                                                      //declaring audio manager object
+    private int maxVolume;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,8 +53,9 @@ public class MainActivity extends CordovaActivity {
         launchUrl = "file:///" + SplashScreenActivity.assetsPath + File.separator + "www/index.html";
         loadUrl(launchUrl);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2) {                  //check if the audio is less than 50%
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 0); //set the audio to 50% when app start.
+        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);                                                                           //maximum value of stream media.
+        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < maxVolume / 2) {                  //check if the audio is less than 50%
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume / 2, 0); //set the audio to 50% when app start.
         }
     }
 }
