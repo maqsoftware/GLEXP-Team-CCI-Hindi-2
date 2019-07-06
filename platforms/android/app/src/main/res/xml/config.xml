@@ -43,6 +43,10 @@
     <feature name="Zip">
         <param name="android-package" value="org.apache.cordova.Zip" />
     </feature>
+    <feature name="FirebasePlugin">
+        <param name="android-package" value="org.apache.cordova.firebase.FirebasePlugin" />
+        <param name="onload" value="true" />
+    </feature>
     <name>CCI</name>
     <description>
         A sample Apache Cordova application that responds to the deviceready event.
@@ -68,4 +72,5 @@
     <splash density="port-xhdpi" src="res/load_final.png" />
     <allow-intent href="market:*" />
     <preference name="loglevel" value="DEBUG" />
+
 </widget>
