@@ -24,11 +24,10 @@ import com.google.android.vending.expansion.downloader.impl.DownloaderService;
  */
 public class ExpansionDownloaderService extends DownloaderService {
     // stuff for LVL -- MODIFY FOR YOUR APPLICATION!
-    private static final String BASE64_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl7LFe5FyRte9PtuChRvZ6dMih+LHzbzqGSUSf4bwbsZL2TItpUNxDxPpDGPqA/iNpuYzc9impVyE7gOgirM27Nu5Cm8gEwHmsbEnElb1r30INK2GaPDXqqfOjOcNpYRh362wSu8m008hCpKy+OuZkGKijv/jrU4U8RhoZ8kvA2TK9W2Ggv1yZ8UMuS7+t1X0dxAEDliSh7bpzN42G4dM2wdRawIx4IFP/i0V8/WYRECEHUuMTnx9g8A/F06sVUzqbjKFyUGDwKS+ym5ZJnovZQrYnSew9sW8s/PE/8RLwR2+5xygukfiZUlnFAddjJCKoAPOPYzwcVfcTWdoLcZjnwIDAQAB";
-    // used by the preference obfuscater
+    private static final String BASE64_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk2Lq0nSJWf01DEltYf1J/9qKOBpEhthPXLn1ezGKM1oLT3CWNeZbuLEGlXWNvlABYIUqekuJFKUCRn8gK0rF1a2Jb6nnR6ivf4hyfpnDCKw8NZmcmvVke8fVW9bylg2xgiFNsORU7D57qsjGegkGmA5Zy6spzEiiwd1d/05/AKOzl6Icq0f+5yvL01x9mYPHFw6QeqKBiyc/PRs+2ByTqvGgPOY6FCBCUc9mpeN6oOyBFJSruiBDwgX/mM9JDoYiS9Poj6eTNxZy3BIr/B6zjx3NRy9hquNk56n51b9xamrxmY6ul/i+Saouvmb9rKS3VmIzXQcL4ULWAxTWbDrPewIDAQAB";
     private static final byte[] SALT = new byte[] {
-            1, 43, -12, -1, 54, 98,
-            -100, -12, 43, 2, -8, -4, 9, 5, -106, -108, -33, 45, -1, 84
+            76, -119, -11, -102, 17, -81,
+            -124, 28, -82, 13, -52, -19, 15, -112, -107, 43, 54, -33, -108, 70
     };
 
     /**

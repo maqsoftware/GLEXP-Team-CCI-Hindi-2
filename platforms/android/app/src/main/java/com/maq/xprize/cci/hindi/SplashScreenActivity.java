@@ -23,8 +23,8 @@ import com.google.android.vending.expansion.downloader.Helpers;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipFile;
+import static com.cci.DownloadExpansionFile.xAPKs ;
 
-import static com.cci.DownloadExpansionFile.xAPKs;
 
 
 public class SplashScreenActivity extends Activity {

@@ -32,6 +32,11 @@
             android:name="SplashScreenActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:screenOrientation="sensorLandscape">
+        </activity>
+        <activity
+            android:name="com.cci.DownloadExpansionFile"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -47,11 +52,31 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/camera_provider_paths" />
         </provider>
+        <!--
+        In order to start the service, it must be uniquely registered with
+        the package manager here.
+       -->
+        <service android:name="com.services.ExpansionDownloaderService" />
+        <!--
+         In order for the alarm manager to contact the downloader script, the receiver
+         must be uniquely registered with the package manager here.
+        -->
+        <receiver android:name="com.services.ExpansionAlarmReceiver" />
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
     </application>
+
+
 
 
     <!-- Required to read and write the expansion files on shared storage. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 </manifest>

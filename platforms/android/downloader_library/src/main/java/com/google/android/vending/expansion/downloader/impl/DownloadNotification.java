@@ -16,17 +16,21 @@
 
 package com.google.android.vending.expansion.downloader.impl;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.os.Build;
+import android.os.Messenger;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
+
 import com.android.vending.expansion.downloader.R;
 import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
 import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
 import com.google.android.vending.expansion.downloader.Helpers;
 import com.google.android.vending.expansion.downloader.IDownloaderClient;
-
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.os.Messenger;
 
 /**
  * This class handles displaying the notification associated with the download
@@ -41,37 +45,79 @@ import android.os.Messenger;
  */
 public class DownloadNotification implements IDownloaderClient {
 
-    private int mState;
+    private static final String LOGTAG = "DownloadNotification";
+    private static final int NOTIFICATION_ID = LOGTAG.hashCode();
+    private static final String CHANNEL_ID = "downloadChannel";
     private final Context mContext;
     private final NotificationManager mNotificationManager;
-    private String mCurrentTitle;
-
+    private NotificationManager notificationManager;
+    private int mState;
+    private CharSequence mCurrentTitle;
     private IDownloaderClient mClientProxy;
-    final ICustomNotification mCustomNotification;
-    private Notification mNotification;
-    private Notification mCurrentNotification;
+    private NotificationCompat.Builder mActiveDownloadBuilder;
+    private NotificationCompat.Builder mBuilder;
+    private NotificationCompat.Builder mCurrentBuilder;
     private CharSequence mLabel;
     private String mCurrentText;
-    private PendingIntent mContentIntent;
     private DownloadProgressInfo mProgressInfo;
+    private PendingIntent mContentIntent;
 
-    static final String LOGTAG = "DownloadNotification";
-    static final int NOTIFICATION_ID = LOGTAG.hashCode();
+    /**
+     * Constructor
+     *
+     * @param ctx The context to use to obtain access to the Notification
+     *            Service
+     */
 
-    public PendingIntent getClientIntent() {
-        return mContentIntent;
+    DownloadNotification(Context ctx, CharSequence applicationLabel) {
+        mState = -1;
+        mContext = ctx;
+        mLabel = applicationLabel;
+        mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        mActiveDownloadBuilder = new NotificationCompat.Builder(ctx, CHANNEL_ID);
+        mBuilder = new NotificationCompat.Builder(ctx, CHANNEL_ID);
+
+        // Set Notification category and priorities to something that makes sense for a long
+        // lived background task.
+        mActiveDownloadBuilder.setPriority(Notification.PRIORITY_LOW);
+        mActiveDownloadBuilder.setCategory(Notification.CATEGORY_PROGRESS);
+
+        mBuilder.setPriority(Notification.PRIORITY_LOW);
+        mBuilder.setCategory(Notification.CATEGORY_PROGRESS);
+
+        mCurrentBuilder = mBuilder;
+        createNotificationChannel();
     }
 
-    public void setClientIntent(PendingIntent mClientIntent) {
-        this.mContentIntent = mClientIntent;
+    void setClientIntent(PendingIntent clientIntent) {
+        this.mBuilder.setContentIntent(clientIntent);
+        this.mActiveDownloadBuilder.setContentIntent(clientIntent);
+        this.mContentIntent = clientIntent;
     }
 
-    public void resendState() {
+    void resendState() {
         if (null != mClientProxy) {
             mClientProxy.onDownloadStateChanged(mState);
         }
     }
 
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = String.valueOf(R.string.channel_name);
+            String description = String.valueOf(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            notificationManager = mContext.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void onDownloadStateChanged(int newState) {
         if (null != mClientProxy) {
@@ -130,19 +176,24 @@ public class DownloadNotification implements IDownloaderClient {
                     ongoingEvent = true;
                     break;
             }
+
             mCurrentText = mContext.getString(stringDownloadID);
-            mCurrentTitle = mLabel.toString();
-            mCurrentNotification.tickerText = mLabel + ": " + mCurrentText;
-            mCurrentNotification.icon = iconResource;
-            mCurrentNotification.setLatestEventInfo(mContext, mCurrentTitle, mCurrentText,
-                    mContentIntent);
+            mCurrentTitle = mLabel;
+            mCurrentBuilder.setTicker(mLabel + ": " + mCurrentText);
+            mCurrentBuilder.setSmallIcon(iconResource);
+            mCurrentBuilder.setContentTitle(mCurrentTitle);
+            mCurrentBuilder.setContentText(mCurrentText);
             if (ongoingEvent) {
-                mCurrentNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+                mCurrentBuilder.setOngoing(true);
             } else {
-                mCurrentNotification.flags &= ~Notification.FLAG_ONGOING_EVENT;
-                mCurrentNotification.flags |= Notification.FLAG_AUTO_CANCEL;
+                mCurrentBuilder.setOngoing(false);
+                mCurrentBuilder.setAutoCancel(true);
             }
-            mNotificationManager.notify(NOTIFICATION_ID, mCurrentNotification);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                notificationManager.notify(NOTIFICATION_ID, mCurrentBuilder.build());
+            } else {
+                mNotificationManager.notify(NOTIFICATION_ID, mCurrentBuilder.build());
+            }
         }
     }
 
@@ -154,48 +205,35 @@ public class DownloadNotification implements IDownloaderClient {
         }
         if (progress.mOverallTotal <= 0) {
             // we just show the text
-            mNotification.tickerText = mCurrentTitle;
-            mNotification.icon = android.R.drawable.stat_sys_download;
-            mNotification.setLatestEventInfo(mContext, mLabel, mCurrentText, mContentIntent);
-            mCurrentNotification = mNotification;
+            mBuilder.setTicker(mCurrentTitle);
+            mBuilder.setSmallIcon(android.R.drawable.stat_sys_download);
+            mBuilder.setContentTitle(mCurrentTitle);
+            mBuilder.setContentText(mCurrentText);
+            mCurrentBuilder = mBuilder;
         } else {
-            mCustomNotification.setCurrentBytes(progress.mOverallProgress);
-            mCustomNotification.setTotalBytes(progress.mOverallTotal);
-            mCustomNotification.setIcon(android.R.drawable.stat_sys_download);
-            mCustomNotification.setPendingIntent(mContentIntent);
-            mCustomNotification.setTicker(mLabel + ": " + mCurrentText);
-            mCustomNotification.setTitle(mLabel);
-            mCustomNotification.setTimeRemaining(progress.mTimeRemaining);
-            mCurrentNotification = mCustomNotification.updateNotification(mContext);
+            mActiveDownloadBuilder.setProgress((int) progress.mOverallTotal, (int) progress.mOverallProgress, false);
+            mActiveDownloadBuilder.setContentText(Helpers.getDownloadProgressString(progress.mOverallProgress, progress.mOverallTotal));
+            mActiveDownloadBuilder.setSmallIcon(android.R.drawable.stat_sys_download);
+            mActiveDownloadBuilder.setTicker(mLabel + ": " + mCurrentText);
+            mActiveDownloadBuilder.setContentTitle(mLabel);
+            mActiveDownloadBuilder.setContentInfo(mContext.getString(R.string.time_remaining_notification,
+                    Helpers.getTimeRemaining(progress.mTimeRemaining)));
+            mCurrentBuilder = mActiveDownloadBuilder;
         }
-        mNotificationManager.notify(NOTIFICATION_ID, mCurrentNotification);
-    }
-
-    public interface ICustomNotification {
-        void setTitle(CharSequence title);
-
-        void setTicker(CharSequence ticker);
-
-        void setPendingIntent(PendingIntent mContentIntent);
-
-        void setTotalBytes(long totalBytes);
-
-        void setCurrentBytes(long currentBytes);
-
-        void setIcon(int iconResource);
-
-        void setTimeRemaining(long timeRemaining);
-
-        Notification updateNotification(Context c);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.notify(NOTIFICATION_ID, mCurrentBuilder.build());
+        } else {
+            mNotificationManager.notify(NOTIFICATION_ID, mCurrentBuilder.build());
+        }
     }
 
     /**
      * Called in response to onClientUpdated. Creates a new proxy and notifies
      * it of the current state.
-     * 
+     *
      * @param msg the client Messenger to notify
      */
-    public void setMessenger(Messenger msg) {
+    void setMessenger(Messenger msg) {
         mClientProxy = DownloaderClientMarshaller.CreateProxy(msg);
         if (null != mProgressInfo) {
             mClientProxy.onDownloadProgress(mProgressInfo);
@@ -203,25 +241,6 @@ public class DownloadNotification implements IDownloaderClient {
         if (mState != -1) {
             mClientProxy.onDownloadStateChanged(mState);
         }
-    }
-
-    /**
-     * Constructor
-     * 
-     * @param ctx The context to use to obtain access to the Notification
-     *            Service
-     */
-    DownloadNotification(Context ctx, CharSequence applicationLabel) {
-        mState = -1;
-        mContext = ctx;
-        mLabel = applicationLabel;
-        mNotificationManager = (NotificationManager)
-                mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        mCustomNotification = CustomNotificationFactory
-                .createCustomNotification();
-        mNotification = new Notification();
-        mCurrentNotification = mNotification;
-
     }
 
     @Override

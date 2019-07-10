@@ -23,14 +23,14 @@ import android.os.Messenger;
  * downloader. It is used to pass status from the service to the client.
  */
 public interface IDownloaderClient {
-    static final int STATE_IDLE = 1;
-    static final int STATE_FETCHING_URL = 2;
-    static final int STATE_CONNECTING = 3;
-    static final int STATE_DOWNLOADING = 4;
-    static final int STATE_COMPLETED = 5;
+    int STATE_IDLE = 1;
+    int STATE_FETCHING_URL = 2;
+    int STATE_CONNECTING = 3;
+    int STATE_DOWNLOADING = 4;
+    int STATE_COMPLETED = 5;
 
-    static final int STATE_PAUSED_NETWORK_UNAVAILABLE = 6;
-    static final int STATE_PAUSED_BY_REQUEST = 7;
+    int STATE_PAUSED_NETWORK_UNAVAILABLE = 6;
+    int STATE_PAUSED_BY_REQUEST = 7;
 
     /**
      * Both STATE_PAUSED_WIFI_DISABLED_NEED_CELLULAR_PERMISSION and
@@ -39,8 +39,8 @@ public interface IDownloaderClient {
      * the Wi-Fi manager is returning that Wi-Fi is not enabled, while in the
      * other case Wi-Fi is enabled but not available.
      */
-    static final int STATE_PAUSED_WIFI_DISABLED_NEED_CELLULAR_PERMISSION = 8;
-    static final int STATE_PAUSED_NEED_CELLULAR_PERMISSION = 9;
+    int STATE_PAUSED_WIFI_DISABLED_NEED_CELLULAR_PERMISSION = 8;
+    int STATE_PAUSED_NEED_CELLULAR_PERMISSION = 9;
 
     /**
      * Both STATE_PAUSED_WIFI_DISABLED and STATE_PAUSED_NEED_WIFI imply that
@@ -53,25 +53,25 @@ public interface IDownloaderClient {
      * developers with very large payloads do not allow these payloads to be
      * downloaded over cellular connections.
      */
-    static final int STATE_PAUSED_WIFI_DISABLED = 10;
-    static final int STATE_PAUSED_NEED_WIFI = 11;
+    int STATE_PAUSED_WIFI_DISABLED = 10;
+    int STATE_PAUSED_NEED_WIFI = 11;
 
-    static final int STATE_PAUSED_ROAMING = 12;
+    int STATE_PAUSED_ROAMING = 12;
 
     /**
      * Scary case. We were on a network that redirected us to another website
      * that delivered us the wrong file.
      */
-    static final int STATE_PAUSED_NETWORK_SETUP_FAILURE = 13;
+    int STATE_PAUSED_NETWORK_SETUP_FAILURE = 13;
 
-    static final int STATE_PAUSED_SDCARD_UNAVAILABLE = 14;
+    int STATE_PAUSED_SDCARD_UNAVAILABLE = 14;
 
-    static final int STATE_FAILED_UNLICENSED = 15;
-    static final int STATE_FAILED_FETCHING_URL = 16;
-    static final int STATE_FAILED_SDCARD_FULL = 17;
-    static final int STATE_FAILED_CANCELED = 18;
+    int STATE_FAILED_UNLICENSED = 15;
+    int STATE_FAILED_FETCHING_URL = 16;
+    int STATE_FAILED_SDCARD_FULL = 17;
+    int STATE_FAILED_CANCELED = 18;
 
-    static final int STATE_FAILED = 19;
+    int STATE_FAILED = 19;
 
     /**
      * Called internally by the stub when the service is bound to the client.
@@ -86,9 +86,9 @@ public interface IDownloaderClient {
      * instance of {@link IDownloaderService}, then call
      * {@link IDownloaderService#onClientUpdated} with the Messenger retrieved
      * from your {@link IStub} proxy object.
-     * 
+     *
      * @param m the service Messenger. This Messenger is used to call the
-     *            service API from the client.
+     *          service API from the client.
      */
     void onServiceConnected(Messenger m);
 
@@ -109,7 +109,7 @@ public interface IDownloaderClient {
      * cellular connections with appropriate warnings. If the application
      * suddenly starts downloading, the application should revert to showing the
      * progress again, rather than leaving up the download over cellular UI up.
-     * 
+     *
      * @param newState one of the STATE_* values defined in IDownloaderClient
      */
     void onDownloadStateChanged(int newState);
@@ -118,9 +118,9 @@ public interface IDownloaderClient {
      * Shows the download progress. This is intended to be used to fill out a
      * client UI. This progress should only be shown in a few states such as
      * STATE_DOWNLOADING.
-     * 
+     *
      * @param progress the DownloadProgressInfo object containing the current
-     *            progress of all downloads.
+     *                 progress of all downloads.
      */
     void onDownloadProgress(DownloadProgressInfo progress);
 }

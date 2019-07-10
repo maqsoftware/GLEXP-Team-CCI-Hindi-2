@@ -18,8 +18,5 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="ButtonBackground">
-        <item name="android:background">@android:color/background_dark</item>
-    </style>
 
 </resources>

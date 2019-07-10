@@ -16,8 +16,6 @@
 
 package com.google.android.vending.expansion.downloader;
 
-import com.google.android.vending.expansion.downloader.impl.DownloaderService;
-
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -32,13 +30,14 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.google.android.vending.expansion.downloader.impl.DownloaderService;
 
 
 /**
  * This class binds the service API to your application client.  It contains the IDownloaderClient proxy,
  * which is used to call functions in your client as well as the Stub, which is used to call functions
  * in the client implementation of IDownloaderClient.
- * 
+ *
  * <p>The IPC is implemented using an Android Messenger and a service Binder.  The connect method
  * should be called whenever the client wants to bind to the service.  It opens up a service connection
  * that ends up calling the onServiceConnected client API that passes the service messenger
@@ -70,8 +69,87 @@ public class DownloaderClientMarshaller {
     public static final int LVL_CHECK_REQUIRED = DownloaderService.LVL_CHECK_REQUIRED;
     public static final int DOWNLOAD_REQUIRED = DownloaderService.DOWNLOAD_REQUIRED;
 
+    /**
+     * Returns a proxy that will marshal calls to IDownloaderClient methods
+     *
+     * @param msg
+     * @return
+     */
+    public static IDownloaderClient CreateProxy(Messenger msg) {
+        return new Proxy(msg);
+    }
+
+    /**
+     * Returns a stub object that, when connected, will listen for marshaled
+     * {@link IDownloaderClient} methods and translate them into calls to the supplied
+     * interface.
+     *
+     * @param itf               An implementation of IDownloaderClient that will be called
+     *                          when remote method calls are unmarshaled.
+     * @param downloaderService The class for your implementation of {@link
+     *                          impl.DownloaderService}.
+     * @return The {@link IStub} that allows you to connect to the service such that
+     * your {@link IDownloaderClient} receives status updates.
+     */
+    public static IStub CreateStub(IDownloaderClient itf, Class<?> downloaderService) {
+        return new Stub(itf, downloaderService);
+    }
+
+    /**
+     * Starts the download if necessary. This function starts a flow that does `
+     * many things. 1) Checks to see if the APK version has been checked and
+     * the metadata database updated 2) If the APK version does not match,
+     * checks the new LVL status to see if a new download is required 3) If the
+     * APK version does match, then checks to see if the download(s) have been
+     * completed 4) If the downloads have been completed, returns
+     * NO_DOWNLOAD_REQUIRED The idea is that this can be called during the
+     * startup of an application to quickly ascertain if the application needs
+     * to wait to hear about any updated APK expansion files. Note that this does
+     * mean that the application MUST be run for the first time with a network
+     * connection, even if Market delivers all of the files.
+     *
+     * @param context            Your application Context.
+     * @param notificationClient A PendingIntent to start the Activity in your application
+     *                           that shows the download progress and which will also start the application when download
+     *                           completes.
+     * @param serviceClass       the class of your {@link imp.DownloaderService} implementation
+     * @return whether the service was started and the reason for starting the service.
+     * Either {@link #NO_DOWNLOAD_REQUIRED}, {@link #LVL_CHECK_REQUIRED}, or {@link
+     * #DOWNLOAD_REQUIRED}.
+     * @throws NameNotFoundException
+     */
+    public static int startDownloadServiceIfRequired(Context context, PendingIntent notificationClient,
+                                                     Class<?> serviceClass)
+            throws NameNotFoundException {
+        return DownloaderService.startDownloadServiceIfRequired(context, notificationClient,
+                serviceClass);
+    }
+
+    /**
+     * This version assumes that the intent contains the pending intent as a parameter. This
+     * is used for responding to alarms.
+     * <p>The pending intent must be in an extra with the key {@link
+     * impl.DownloaderService#EXTRA_PENDING_INTENT}.
+     *
+     * @param context
+     * @param notificationClient
+     * @param serviceClass       the class of the service to start
+     * @return
+     * @throws NameNotFoundException
+     */
+    public static int startDownloadServiceIfRequired(Context context, Intent notificationClient,
+                                                     Class<?> serviceClass)
+            throws NameNotFoundException {
+        return DownloaderService.startDownloadServiceIfRequired(context, notificationClient,
+                serviceClass);
+    }
+
     private static class Proxy implements IDownloaderClient {
         private Messenger mServiceMessenger;
+
+        public Proxy(Messenger msg) {
+            mServiceMessenger = msg;
+        }
 
         @Override
         public void onDownloadStateChanged(int newState) {
@@ -96,10 +174,6 @@ public class DownloaderClientMarshaller {
                 e.printStackTrace();
             }
         }
-        
-        public Proxy(Messenger msg) {
-            mServiceMessenger = msg;
-        }
 
         @Override
         public void onServiceConnected(Messenger m) {
@@ -110,7 +184,7 @@ public class DownloaderClientMarshaller {
     }
 
     private static class Stub implements IStub {
-        private IDownloaderClient mItf = null;
+        private IDownloaderClient mItf;
         private Class<?> mDownloaderServiceClass;
         private boolean mBound;
         private Messenger mServiceMessenger;
@@ -122,11 +196,11 @@ public class DownloaderClientMarshaller {
             @Override
             public void handleMessage(Message msg) {
                 switch (msg.what) {
-                    case MSG_ONDOWNLOADPROGRESS:                        
+                    case MSG_ONDOWNLOADPROGRESS:
                         Bundle bun = msg.getData();
-                        if ( null != mContext ) {
+                        if (null != mContext) {
                             bun.setClassLoader(mContext.getClassLoader());
-                            DownloadProgressInfo dpi = (DownloadProgressInfo) msg.getData()
+                            DownloadProgressInfo dpi = msg.getData()
                                     .getParcelable(PARAM_PROGRESS);
                             mItf.onDownloadProgress(dpi);
                         }
@@ -141,12 +215,6 @@ public class DownloaderClientMarshaller {
                 }
             }
         });
-
-        public Stub(IDownloaderClient itf, Class<?> downloaderService) {
-            mItf = itf;
-            mDownloaderServiceClass = downloaderService;
-        }
-
         /**
          * Class for interacting with the main interface of the service.
          */
@@ -169,19 +237,24 @@ public class DownloaderClientMarshaller {
             }
         };
 
+        public Stub(IDownloaderClient itf, Class<?> downloaderService) {
+            mItf = itf;
+            mDownloaderServiceClass = downloaderService;
+        }
+
         @Override
         public void connect(Context c) {
             mContext = c;
             Intent bindIntent = new Intent(c, mDownloaderServiceClass);
             bindIntent.putExtra(PARAM_MESSENGER, mMessenger);
-            if ( !c.bindService(bindIntent, mConnection, Context.BIND_DEBUG_UNBIND) ) {
-                if ( Constants.LOGVV ) {
+            if (!c.bindService(bindIntent, mConnection, Context.BIND_DEBUG_UNBIND)) {
+                if (Constants.LOGVV) {
                     Log.d(Constants.TAG, "Service Unbound");
                 }
             } else {
                 mBound = true;
             }
-                
+
         }
 
         @Override
@@ -198,80 +271,5 @@ public class DownloaderClientMarshaller {
             return mMessenger;
         }
     }
-
-    /**
-     * Returns a proxy that will marshal calls to IDownloaderClient methods
-     * 
-     * @param msg
-     * @return
-     */
-    public static IDownloaderClient CreateProxy(Messenger msg) {
-        return new Proxy(msg);
-    }
-
-    /**
-     * Returns a stub object that, when connected, will listen for marshaled
-     * {@link IDownloaderClient} methods and translate them into calls to the supplied
-     * interface.
-     * 
-     * @param itf An implementation of IDownloaderClient that will be called
-     *            when remote method calls are unmarshaled.
-     * @param downloaderService The class for your implementation of {@link
-     * impl.DownloaderService}.
-     * @return The {@link IStub} that allows you to connect to the service such that
-     * your {@link IDownloaderClient} receives status updates.
-     */
-    public static IStub CreateStub(IDownloaderClient itf, Class<?> downloaderService) {
-        return new Stub(itf, downloaderService);
-    }
-    
-    /**
-     * Starts the download if necessary. This function starts a flow that does `
-     * many things. 1) Checks to see if the APK version has been checked and
-     * the metadata database updated 2) If the APK version does not match,
-     * checks the new LVL status to see if a new download is required 3) If the
-     * APK version does match, then checks to see if the download(s) have been
-     * completed 4) If the downloads have been completed, returns
-     * NO_DOWNLOAD_REQUIRED The idea is that this can be called during the
-     * startup of an application to quickly ascertain if the application needs
-     * to wait to hear about any updated APK expansion files. Note that this does
-     * mean that the application MUST be run for the first time with a network
-     * connection, even if Market delivers all of the files.
-     * 
-     * @param context Your application Context.
-     * @param notificationClient A PendingIntent to start the Activity in your application
-     * that shows the download progress and which will also start the application when download
-     * completes.
-     * @param serviceClass the class of your {@link imp.DownloaderService} implementation
-     * @return whether the service was started and the reason for starting the service.
-     * Either {@link #NO_DOWNLOAD_REQUIRED}, {@link #LVL_CHECK_REQUIRED}, or {@link
-     * #DOWNLOAD_REQUIRED}.
-     * @throws NameNotFoundException
-     */
-    public static int startDownloadServiceIfRequired(Context context, PendingIntent notificationClient, 
-            Class<?> serviceClass)
-            throws NameNotFoundException {
-        return DownloaderService.startDownloadServiceIfRequired(context, notificationClient,
-                serviceClass);
-    }
-    
-    /**
-     * This version assumes that the intent contains the pending intent as a parameter. This
-     * is used for responding to alarms.
-     * <p>The pending intent must be in an extra with the key {@link 
-     * impl.DownloaderService#EXTRA_PENDING_INTENT}.
-     * 
-     * @param context
-     * @param notificationClient
-     * @param serviceClass the class of the service to start
-     * @return
-     * @throws NameNotFoundException
-     */
-    public static int startDownloadServiceIfRequired(Context context, Intent notificationClient, 
-            Class<?> serviceClass)
-            throws NameNotFoundException {
-        return DownloaderService.startDownloadServiceIfRequired(context, notificationClient,
-                serviceClass);
-    }    
 
 }

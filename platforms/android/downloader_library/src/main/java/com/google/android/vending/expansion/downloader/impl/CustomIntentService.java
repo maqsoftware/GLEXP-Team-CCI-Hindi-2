@@ -18,11 +18,13 @@ package com.google.android.vending.expansion.downloader.impl;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 /**
@@ -31,13 +33,12 @@ import android.util.Log;
  * in should stop. Since the goal of this service is to handle a single kind of
  * intent, it does not queue up batches of intents of the same type.
  */
-public abstract class CustomIntentService extends Service {
+public abstract class CustomIntentService extends Service { private static final String LOG_TAG = "CustomIntentService";
+    private static final int WHAT_MESSAGE = -10;
     private String mName;
     private boolean mRedelivery;
     private volatile ServiceHandler mServiceHandler;
     private volatile Looper mServiceLooper;
-    private static final String LOG_TAG = "CancellableIntentService";
-    private static final int WHAT_MESSAGE = -10;
 
     public CustomIntentService(String paramString) {
         this.mName = paramString;
@@ -58,10 +59,11 @@ public abstract class CustomIntentService extends Service {
         this.mServiceHandler = new ServiceHandler(this.mServiceLooper);
     }
 
+    @android.support.annotation.RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
     @Override
     public void onDestroy() {
         Thread localThread = this.mServiceLooper.getThread();
-        if ((localThread != null) && (localThread.isAlive())) {
+        if (localThread.isAlive()) {
             localThread.interrupt();
         }
         this.mServiceLooper.quit();
@@ -83,6 +85,7 @@ public abstract class CustomIntentService extends Service {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.ECLAIR)
     @Override
     public int onStartCommand(Intent paramIntent, int flags, int startId) {
         onStart(paramIntent, startId);
@@ -94,7 +97,7 @@ public abstract class CustomIntentService extends Service {
     }
 
     private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
+        ServiceHandler(Looper looper) {
             super(looper);
         }
 

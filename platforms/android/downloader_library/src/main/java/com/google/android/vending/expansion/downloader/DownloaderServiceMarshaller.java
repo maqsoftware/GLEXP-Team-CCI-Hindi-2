@@ -16,8 +16,6 @@
 
 package com.google.android.vending.expansion.downloader;
 
-import com.google.android.vending.expansion.downloader.impl.DownloaderService;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,12 +23,13 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
+import com.google.android.vending.expansion.downloader.impl.DownloaderService;
 
 
 /**
  * This class is used by the client activity to proxy requests to the Downloader
  * Service.
- *
+ * <p>
  * Most importantly, you must call {@link #CreateProxy} during the {@link
  * IDownloaderClient#onServiceConnected} callback in your activity in order to instantiate
  * an {@link IDownloaderService} object that you can then use to issue commands to the {@link
@@ -54,8 +53,35 @@ public class DownloaderServiceMarshaller {
     public static final String PARAMS_FLAGS = "flags";
     public static final String PARAM_MESSENGER = DownloaderService.EXTRA_MESSAGE_HANDLER;
 
+    /**
+     * Returns a proxy that will marshall calls to IDownloaderService methods
+     *
+     * @param ctx
+     * @return
+     */
+    public static IDownloaderService CreateProxy(Messenger msg) {
+        return new Proxy(msg);
+    }
+
+    /**
+     * Returns a stub object that, when connected, will listen for marshalled
+     * IDownloaderService methods and translate them into calls to the supplied
+     * interface.
+     *
+     * @param itf An implementation of IDownloaderService that will be called
+     *            when remote method calls are unmarshalled.
+     * @return
+     */
+    public static IStub CreateStub(IDownloaderService itf) {
+        return new Stub(itf);
+    }
+
     private static class Proxy implements IDownloaderService {
         private Messenger mMsg;
+
+        public Proxy(Messenger msg) {
+            mMsg = msg;
+        }
 
         private void send(int method, Bundle params) {
             Message m = Message.obtain(null, method);
@@ -65,10 +91,6 @@ public class DownloaderServiceMarshaller {
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-        }
-
-        public Proxy(Messenger msg) {
-            mMsg = msg;
         }
 
         @Override
@@ -107,7 +129,7 @@ public class DownloaderServiceMarshaller {
     }
 
     private static class Stub implements IStub {
-        private IDownloaderService mItf = null;
+        private IDownloaderService mItf;
         final Messenger mMessenger = new Messenger(new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -153,29 +175,6 @@ public class DownloaderServiceMarshaller {
         public void disconnect(Context c) {
 
         }
-    }
-
-    /**
-     * Returns a proxy that will marshall calls to IDownloaderService methods
-     * 
-     * @param ctx
-     * @return
-     */
-    public static IDownloaderService CreateProxy(Messenger msg) {
-        return new Proxy(msg);
-    }
-
-    /**
-     * Returns a stub object that, when connected, will listen for marshalled
-     * IDownloaderService methods and translate them into calls to the supplied
-     * interface.
-     * 
-     * @param itf An implementation of IDownloaderService that will be called
-     *            when remote method calls are unmarshalled.
-     * @return
-     */
-    public static IStub CreateStub(IDownloaderService itf) {
-        return new Stub(itf);
     }
 
 }

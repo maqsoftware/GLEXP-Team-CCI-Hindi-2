@@ -1,12 +1,17 @@
 apply plugin: 'com.android.library'
 
+
 android {
-    compileSdkVersion 15
+    compileSdkVersion 28
     buildToolsVersion "28.0.3"
 
     defaultConfig {
-        minSdkVersion 4
-        targetSdkVersion 15
+        minSdkVersion 19
+        targetSdkVersion 28
+    }
+
+    lintOptions {
+        abortOnError false
     }
 
     buildTypes {
@@ -15,8 +20,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+lintOptions {
+          abortOnError false 
+    }
+
 }
 
 dependencies {
     implementation project(path: ':market_licensing')
+    implementation 'com.android.support:support-compat:28.0.0'
+
 }

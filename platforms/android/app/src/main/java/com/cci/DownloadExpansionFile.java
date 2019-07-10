@@ -32,7 +32,10 @@ import com.google.android.vending.expansion.downloader.IDownloaderService;
 import com.google.android.vending.expansion.downloader.IStub;
 import com.maq.xprize.cci.hindi.MainActivity;
 import com.maq.xprize.cci.hindi.R;
+import com.maq.xprize.cci.hindi.SplashScreenActivity;
 import com.services.ExpansionDownloaderService;
+
+import org.apache.cordova.splashscreen.SplashScreen;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -40,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Locale;
 import java.util.zip.CRC32;
 
 
@@ -62,165 +66,42 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
     /* expansion service*/
     private static final String LOG_TAG = "LVLDownloader";
     /**
+     private static final String LOG_TAG = "LVLDownloader";
+     /**
      * Calculating a moving average for the validation speed so we don't get
      * jumpy calculations for time etc.
      */
     static private final float SMOOTHING_FACTOR = 0.005f;
-    private IDownloaderService mRemoteService;
-    private IStub mDownloaderClientStub;
-    private View mDashboard;
-    private View mCellMessage;
     private ProgressBar mPB;
-    private boolean mStatePaused;
-    private int mState;
     private TextView mStatusText;
-    private Button mPauseButton;
     private TextView mProgressFraction;
     private TextView mProgressPercent;
     private TextView mAverageSpeed;
     private TextView mTimeRemaining;
-    private Button mWiFiSettingsButton;
-    private ImageView mProgressImage;
-    private Context vContext;
+    private View mDashboard;
+    private View mCellMessage;
+    private Button mPauseButton;
+    private boolean mStatePaused;
+    private int mState;
+    private IDownloaderService mRemoteService;
+    private IStub mDownloaderClientStub;
     /**
      * Used by the async task
      */
     private boolean mCancelValidation;
 
-    // For to Delete the directory inside list of files and inner Directory
-    public static boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        vContext = this;
-        /**
-         * Both downloading and validation make use of the "download" UI
-         */
-        initializeDownloadUI();
-
-
-        /**
-         * Before we do anything, are the files we expect already here and
-         * delivered (presumably by Market) For free titles, this is probably`
-         * worth doing. (so no Market request is necessary)
-         */
-        if (!expansionFilesDelivered()) {
-            String pathname = this.getExternalFilesDir(null).toString() + File.separator + "audio";
-
-            File deleteFolder = new File(pathname);
-            if (deleteFolder.isDirectory()) {
-                deleteDir(deleteFolder);
-            }
-            try {
-                Intent launchIntent = DownloadExpansionFile.this
-                        .getIntent();
-                Intent intentToLaunchThisActivityFromNotification = new Intent(
-                        DownloadExpansionFile
-                                .this, DownloadExpansionFile.this.getClass());
-                intentToLaunchThisActivityFromNotification.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                intentToLaunchThisActivityFromNotification.setAction(launchIntent.getAction());
-
-                if (launchIntent.getCategories() != null) {
-                    for (String category : launchIntent.getCategories()) {
-                        intentToLaunchThisActivityFromNotification.addCategory(category);
-                    }
-                }
-
-                // Build PendingIntent used to open this activity from
-                // Notification
-                PendingIntent pendingIntent = PendingIntent.getActivity(
-                        DownloadExpansionFile.this,
-                        0, intentToLaunchThisActivityFromNotification,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
-                // Request to start the download
-                int startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(this,
-                        pendingIntent, ExpansionDownloaderService.class);
-
-                Log.d("DownloadRequiredValue:", Integer.toString(DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED));
-                if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
-                    // The DownloaderService has started downloading the files,
-                    // show progress
-                    initializeDownloadUI();
-                    return;
-
-                } // otherwise, download not needed so we fall through to
-                // starting the movie
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e(LOG_TAG, "Cannot find own package! MAYDAY!");
-                e.printStackTrace();
-            }
-
-        } else {
-            validateXAPKZipFiles();
-            Intent intent = new Intent(vContext, MainActivity.class);
-            startActivity(intent);
+    private void setState(int newState) {
+        if (mState != newState) {
+            mState = newState;
+            mStatusText.setText(Helpers.getDownloaderStringResourceIDFromState(newState));
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        if (null != mDownloaderClientStub) {
-            mDownloaderClientStub.disconnect(this);
-        }
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        this.mCancelValidation = true;
-        super.onDestroy();
-    }
-
-    private void initializeDownloadUI() {
-        mDownloaderClientStub = DownloaderClientMarshaller.CreateStub
-                (this, ExpansionDownloaderService.class);
-        setContentView(null);
-
-        getWindow().getDecorView().setBackgroundColor(Color.WHITE);
-
-        mProgressImage.setY(120);
-        mProgressImage.invalidate();
-
-        mPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mStatePaused) {
-                    mRemoteService.requestContinueDownload();
-                } else {
-                    mRemoteService.requestPauseDownload();
-                }
-                setButtonPausedState(!mStatePaused);
-            }
-        });
-
-        mWiFiSettingsButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
-            }
-        });
+    private void setButtonPausedState(boolean paused) {
+        mStatePaused = paused;
+        int stringResourceID = paused ? R.string.text_button_resume :
+                R.string.text_button_pause;
+        mPauseButton.setText(stringResourceID);
     }
 
     /**
@@ -237,100 +118,10 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
     boolean expansionFilesDelivered() {
         for (XAPKFile xf : xAPKs) {
             String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
-            if (Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) {
-                return true;
-            }
+            if (Helpers.doesFileExist(this, fileName, xf.mFileSize, false))
+                return false;
         }
-        return false;
-    }
-
-    @Override
-    public void onServiceConnected(Messenger m) {
-        mRemoteService = DownloaderServiceMarshaller.CreateProxy(m);
-        mRemoteService.onClientUpdated(mDownloaderClientStub.getMessenger());
-    }
-
-    @Override
-    public void onDownloadStateChanged(int newState) {
-        setState(newState);
-        boolean showDashboard = true;
-        boolean showCellMessage = false;
-        boolean paused;
-        boolean indeterminate;
-        switch (newState) {
-            case IDownloaderClient.STATE_IDLE:
-                // STATE_IDLE means the service is listening, so it's
-                // safe to start making calls via mRemoteService.
-                paused = false;
-                indeterminate = true;
-                break;
-            case IDownloaderClient.STATE_CONNECTING:
-            case IDownloaderClient.STATE_FETCHING_URL:
-                showDashboard = true;
-                paused = false;
-                indeterminate = true;
-                break;
-            case IDownloaderClient.STATE_DOWNLOADING:
-                paused = false;
-                showDashboard = true;
-                indeterminate = false;
-                break;
-
-            case IDownloaderClient.STATE_FAILED_CANCELED:
-            case IDownloaderClient.STATE_FAILED:
-            case IDownloaderClient.STATE_FAILED_FETCHING_URL:
-            case IDownloaderClient.STATE_FAILED_UNLICENSED:
-                paused = true;
-                showDashboard = false;
-                indeterminate = false;
-                break;
-            case IDownloaderClient.STATE_PAUSED_NEED_CELLULAR_PERMISSION:
-            case IDownloaderClient.STATE_PAUSED_WIFI_DISABLED_NEED_CELLULAR_PERMISSION:
-                showDashboard = false;
-                paused = true;
-                indeterminate = false;
-                showCellMessage = true;
-                break;
-
-            case IDownloaderClient.STATE_PAUSED_BY_REQUEST:
-                paused = true;
-                indeterminate = false;
-                break;
-            case IDownloaderClient.STATE_PAUSED_ROAMING:
-            case IDownloaderClient.STATE_PAUSED_SDCARD_UNAVAILABLE:
-                paused = true;
-                indeterminate = false;
-                break;
-            case IDownloaderClient.STATE_COMPLETED:
-                showDashboard = false;
-                paused = false;
-                indeterminate = false;
-                validateXAPKZipFiles();
-                return;
-            default:
-                paused = true;
-                indeterminate = true;
-                showDashboard = true;
-        }
-        int newDashboardVisibility = showDashboard ? View.VISIBLE : View.GONE;
-        if (mDashboard.getVisibility() != newDashboardVisibility) {
-            mDashboard.setVisibility(newDashboardVisibility);
-        }
-        int cellMessageVisibility = showCellMessage ? View.VISIBLE : View.GONE;
-        if (mCellMessage.getVisibility() != cellMessageVisibility) {
-            mCellMessage.setVisibility(cellMessageVisibility);
-        }
-
-        mPB.setIndeterminate(indeterminate);
-        setButtonPausedState(paused);
-
-    }
-
-    private void setState(int newState) {
-        if (mState != newState) {
-            mState = newState;
-            mStatusText.setText(Helpers.getDownloaderStringResourceIDFromState(newState));
-        }
+        return true;
     }
 
     /**
@@ -343,13 +134,27 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
         AsyncTask<Object, DownloadProgressInfo, Boolean> validationTask = new AsyncTask<Object, DownloadProgressInfo, Boolean>() {
 
             @Override
-            protected Boolean doInBackground(Object... params) {
+            protected void onPreExecute() {
+                mDashboard.setVisibility(View.VISIBLE);
+                mCellMessage.setVisibility(View.GONE);
+                mStatusText.setText(R.string.text_verifying_download);
+                mPauseButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mCancelValidation = true;
+                    }
+                });
+                mPauseButton.setText(R.string.text_button_cancel_verify);
+                super.onPreExecute();
+            }
 
+            @Override
+            protected Boolean doInBackground(Object... params) {
                 for (XAPKFile xf : xAPKs) {
                     String fileName = Helpers.getExpansionAPKFileName(
                             DownloadExpansionFile.this,
                             xf.mIsMain, xf.mFileVersion);
-                    if (!Helpers.doesFileExist(DownloadExpansionFile.this, fileName,
+                    if (Helpers.doesFileExist(DownloadExpansionFile.this, fileName,
                             xf.mFileSize, false))
                         return false;
                     fileName = Helpers
@@ -435,10 +240,6 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                             }
                         }
                     } catch (IOException e) {
-                        StringWriter sw = new StringWriter();
-                        PrintWriter pw = new PrintWriter(sw);
-                        e.printStackTrace(pw);
-                        Log.e("ZIP Exception", sw.toString());
                         e.printStackTrace();
                         return false;
                     }
@@ -447,18 +248,9 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
             }
 
             @Override
-            protected void onPreExecute() {
-                mDashboard.setVisibility(View.VISIBLE);
-                mCellMessage.setVisibility(View.GONE);
-                mStatusText.setText(null);
-                mPauseButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        mCancelValidation = true;
-                    }
-                });
-                mPauseButton.setText(null);
-                super.onPreExecute();
+            protected void onProgressUpdate(DownloadProgressInfo... values) {
+                onDownloadProgress(values[0]);
+                super.onProgressUpdate(values);
             }
 
             @Override
@@ -466,51 +258,271 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                 if (result) {
                     mDashboard.setVisibility(View.VISIBLE);
                     mCellMessage.setVisibility(View.GONE);
-                    mStatusText.setText(null);
-                    Intent intent = new Intent(vContext, MainActivity.class);
-                    startActivity(intent);
+                    mStatusText.setText(R.string.text_validation_complete);
                     mPauseButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
+                            Intent intent = new Intent(DownloadExpansionFile.this, MainActivity.class);
+                            startActivity(intent);
                             finish();
                         }
                     });
                     mPauseButton.setText(android.R.string.ok);
-
                 } else {
                     mDashboard.setVisibility(View.VISIBLE);
                     mCellMessage.setVisibility(View.GONE);
-                    mStatusText.setText(null);
+                    mStatusText.setText(R.string.text_validation_failed);
                     mPauseButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-
                             finish();
                         }
                     });
                     mPauseButton.setText(android.R.string.cancel);
-
                 }
                 super.onPostExecute(result);
-            }
-
-            @Override
-            protected void onProgressUpdate(DownloadProgressInfo... values) {
-                onDownloadProgress(values[0]);
-                super.onProgressUpdate(values);
             }
 
         };
         validationTask.execute(new Object());
     }
 
-    private void setButtonPausedState(boolean paused) {
-        mStatePaused = paused;
-        int stringResourceID = paused ? -1 :
-                -1;
-        mPauseButton.setText(stringResourceID);
+    /**
+     * If the download isn't present, we initialize the download UI. This ties
+     * all of the controls into the remote service calls.
+     */
+    private void initializeDownloadUI() {
+        mDownloaderClientStub = DownloaderClientMarshaller.CreateStub
+                (this, ExpansionDownloaderService.class);
+        setContentView(R.layout.download_expansion_file);
+
+        mPB = findViewById(R.id.progressBar);
+        mStatusText = findViewById(R.id.statusText);
+        mProgressFraction = findViewById(R.id.progressAsFraction);
+        mProgressPercent = findViewById(R.id.progressAsPercentage);
+        mAverageSpeed = findViewById(R.id.progressAverageSpeed);
+        mTimeRemaining = findViewById(R.id.progressTimeRemaining);
+        mDashboard = findViewById(R.id.downloaderDashboard);
+        mCellMessage = findViewById(R.id.approveCellular);
+        mPauseButton = findViewById(R.id.pauseButton);
+        Button mWiFiSettingsButton = findViewById(R.id.wifiSettingsButton);
+
+        mPauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mStatePaused) {
+                    mRemoteService.requestContinueDownload();
+                } else {
+                    mRemoteService.requestPauseDownload();
+                }
+                setButtonPausedState(!mStatePaused);
+            }
+        });
+
+        mWiFiSettingsButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+            }
+        });
+
+        Button resumeOnCell = findViewById(R.id.resumeOverCellular);
+        resumeOnCell.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mRemoteService.setDownloadFlags(IDownloaderService.FLAGS_DOWNLOAD_OVER_CELLULAR);
+                mRemoteService.requestContinueDownload();
+                mCellMessage.setVisibility(View.GONE);
+            }
+        });
+
     }
 
+    /**
+     * Called when the activity is first create; we wouldn't create a layout in
+     * the case where we have the file and are moving to another activity
+     * without downloading.
+     */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        /*
+          Both downloading and validation make use of the "download" UI
+         */
+        initializeDownloadUI();
+
+        /*
+          Before we do anything, are the files we expect already here and
+          delivered (presumably by Market) For free titles, this is probably
+          worth doing. (so no Market request is necessary)
+         */
+        if (!expansionFilesDelivered()) {
+            try {
+                File packageNameDir = getObbDir();
+                if (!packageNameDir.exists()) {
+                    packageNameDir.mkdir();
+                }
+                Intent launchIntent = DownloadExpansionFile.this
+                        .getIntent();
+                Intent intentToLaunchThisActivityFromNotification = new Intent(
+                        DownloadExpansionFile
+                                .this, DownloadExpansionFile.this.getClass());
+                intentToLaunchThisActivityFromNotification.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intentToLaunchThisActivityFromNotification.setAction(launchIntent.getAction());
+
+                if (launchIntent.getCategories() != null) {
+                    for (String category : launchIntent.getCategories()) {
+                        intentToLaunchThisActivityFromNotification.addCategory(category);
+                    }
+                }
+                // Build PendingIntent used to open this activity from
+                // Notification
+                PendingIntent pendingIntent = PendingIntent.getActivity(
+                        DownloadExpansionFile.this,
+                        0, intentToLaunchThisActivityFromNotification,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                // Request to start the download
+                int startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(this,
+                        pendingIntent, ExpansionDownloaderService.class);
+
+                if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
+                    // The DownloaderService has started downloading the files,
+                    // show progress
+                    initializeDownloadUI();
+                } // otherwise, download not needed so we fall through to
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e(LOG_TAG, "Cannot find own package! MAYDAY!");
+                e.printStackTrace();
+            }
+        } else {
+            validateXAPKZipFiles();
+            Intent intent = new Intent(this, SplashScreenActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    /**
+     * Connect the stub to our service on start.
+     */
+    @Override
+    protected void onStart() {
+        if (null != mDownloaderClientStub) {
+            mDownloaderClientStub.connect(this);
+        }
+        super.onStart();
+    }
+
+    /**
+     * Disconnect the stub from our service on stop
+     */
+    @Override
+    protected void onStop() {
+        if (null != mDownloaderClientStub) {
+            mDownloaderClientStub.disconnect(this);
+        }
+        super.onStop();
+    }
+
+    /**
+     * Critical implementation detail. In onServiceConnected we create the
+     * remote service and marshaler. This is how we pass the client information
+     * back to the service so the client can be properly notified of changes. We
+     * must do this every time we reconnect to the service.
+     */
+    @Override
+    public void onServiceConnected(Messenger m) {
+        mRemoteService = DownloaderServiceMarshaller.CreateProxy(m);
+        mRemoteService.onClientUpdated(mDownloaderClientStub.getMessenger());
+    }
+
+    /**
+     * The download state should trigger changes in the UI --- it may be useful
+     * to show the state as being indeterminate at times. This sample can be
+     * considered a guideline.
+     */
+    @Override
+    public void onDownloadStateChanged(int newState) {
+        setState(newState);
+        boolean showDashboard = true;
+        boolean showCellMessage = false;
+        boolean paused;
+        boolean indeterminate;
+        switch (newState) {
+            case IDownloaderClient.STATE_IDLE:
+                // STATE_IDLE means the service is listening, so it's
+                // safe to start making calls via mRemoteService.
+                paused = false;
+                indeterminate = true;
+                break;
+            case IDownloaderClient.STATE_CONNECTING:
+            case IDownloaderClient.STATE_FETCHING_URL:
+                showDashboard = true;
+                paused = false;
+                indeterminate = true;
+                break;
+            case IDownloaderClient.STATE_DOWNLOADING:
+                paused = false;
+                showDashboard = true;
+                indeterminate = false;
+                break;
+
+            case IDownloaderClient.STATE_FAILED_CANCELED:
+            case IDownloaderClient.STATE_FAILED:
+            case IDownloaderClient.STATE_FAILED_FETCHING_URL:
+            case IDownloaderClient.STATE_FAILED_UNLICENSED:
+                paused = true;
+                showDashboard = false;
+                indeterminate = false;
+                break;
+            case IDownloaderClient.STATE_PAUSED_NEED_CELLULAR_PERMISSION:
+            case IDownloaderClient.STATE_PAUSED_WIFI_DISABLED_NEED_CELLULAR_PERMISSION:
+                showDashboard = false;
+                paused = true;
+                indeterminate = false;
+                showCellMessage = true;
+                break;
+
+            case IDownloaderClient.STATE_PAUSED_BY_REQUEST:
+                paused = true;
+                indeterminate = false;
+                break;
+            case IDownloaderClient.STATE_PAUSED_ROAMING:
+            case IDownloaderClient.STATE_PAUSED_SDCARD_UNAVAILABLE:
+                paused = true;
+                indeterminate = false;
+                break;
+            case IDownloaderClient.STATE_COMPLETED:
+                showDashboard = false;
+                paused = false;
+                indeterminate = false;
+                validateXAPKZipFiles();
+                return;
+            default:
+                paused = true;
+                indeterminate = true;
+                showDashboard = true;
+        }
+        int newDashboardVisibility = showDashboard ? View.VISIBLE : View.GONE;
+        if (mDashboard.getVisibility() != newDashboardVisibility) {
+            mDashboard.setVisibility(newDashboardVisibility);
+        }
+        int cellMessageVisibility = showCellMessage ? View.VISIBLE : View.GONE;
+        if (mCellMessage.getVisibility() != cellMessageVisibility) {
+            mCellMessage.setVisibility(cellMessageVisibility);
+        }
+
+        mPB.setIndeterminate(indeterminate);
+        setButtonPausedState(paused);
+    }
+
+    /**
+     * Sets the state of the various controls based on the progressinfo object
+     * sent from the downloader service.
+     */
     @Override
     public void onDownloadProgress(DownloadProgressInfo progress) {
         mAverageSpeed.setText(getString(R.string.kilobytes_per_second,
@@ -518,26 +530,20 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
         mTimeRemaining.setText(getString(R.string.time_remaining,
                 Helpers.getTimeRemaining(progress.mTimeRemaining)));
 
-        progress.mOverallTotal = progress.mOverallTotal;
         mPB.setMax((int) (progress.mOverallTotal >> 8));
         mPB.setProgress((int) (progress.mOverallProgress >> 8));
-        mProgressPercent.setText(progress.mOverallProgress
+        mProgressPercent.setText(String.format(Locale.US, "%d%%", progress.mOverallProgress
                 * 100 /
-                progress.mOverallTotal + "%");
+                progress.mOverallTotal));
         mProgressFraction.setText(Helpers.getDownloadProgressString
                 (progress.mOverallProgress,
                         progress.mOverallTotal));
     }
 
-    private Bitmap getBitmapFromAsset(String strName) {
-        try {
-            AssetManager assetManager = getAssets();
-            InputStream istr = assetManager.open(strName);
-            Bitmap bitmap = BitmapFactory.decodeStream(istr);
-            return bitmap;
-        } catch (Exception e) {
-            return null;
-        }
+    @Override
+    protected void onDestroy() {
+        this.mCancelValidation = true;
+        super.onDestroy();
     }
 
     /**

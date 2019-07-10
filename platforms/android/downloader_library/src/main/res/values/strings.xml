@@ -1,41 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
+    <string name="_0mb_0mb">0MB / 0MB</string>
+    <string name="_0">0%</string>
+    <string name="channel_name">Downloads</string>
+    <string name="channel_description">Shows download progress for expansion files</string>
     <!-- When a download completes, a notification is displayed, and this
         string is used to indicate that the download successfully completed.
         Note that such a download could have been initiated by a variety of
         applications, including (but not limited to) the browser, an email
         application, a content marketplace. -->
-    <string name="notification_download_complete">Download complete</string>
-
-    <!-- When a download completes, a notification is displayed, and this
-        string is used to indicate that the download failed.
-        Note that such a download could have been initiated by a variety of
-        applications, including (but not limited to) the browser, an email
-        application, a content marketplace. -->
-    <string name="notification_download_failed">Download unsuccessful</string>
-
-
-    <string name="state_unknown">Starting..."</string>
-    <string name="state_idle">Waiting for download to start</string>
-    <string name="state_fetching_url">Looking for resources to download</string>
-    <string name="state_connecting">Connecting to the download server</string>
-    <string name="state_downloading">Downloading resources</string>
-    <string name="state_completed">Download finished</string>
-    <string name="state_paused_network_unavailable">Download paused because no network is available</string>
-    <string name="state_paused_network_setup_failure">Download paused. Test a website in browser</string>
-    <string name="state_paused_by_request">Download paused</string>
-    <string name="state_paused_wifi_unavailable">Download paused because wifi is unavailable</string>
-    <string name="state_paused_wifi_disabled">Download paused because wifi is disabled</string>
-    <string name="state_paused_roaming">Download paused because you are roaming</string>
-    <string name="state_paused_sdcard_unavailable">Download paused because the external storage is unavailable</string>
-    <string name="state_failed_unlicensed">Download failed because you may not have purchased this app</string>
-    <string name="state_failed_fetching_url">Download failed because the resources could not be found</string>
-    <string name="state_failed_sdcard_full">Download failed because the external storage is full</string>
-    <string name="state_failed_cancelled">Download cancelled</string>
-    <string name="state_failed">Download failed</string>
-
+    <string name="reminders_channel_name">Reminders</string>
+    <string name="reminders_channel_description">Displays reminder for studying</string>
     <string name="kilobytes_per_second">%1$s KB/s</string>
-    <string name="time_remaining">Time remaining: %1$s</string>
+    <string name="state_unknown">Starting…"\nशुरू हो रहा है…"</string>
+    <string name="state_idle">Waiting for download to start\nडाउनलोड शुरू होने की प्रतीक्षा करें।</string>
+    <string name="state_fetching_url">Looking for resources to download\nडाउनलोड करने के लिए फ़ाइलों को ढूंढा जा रहा है।</string>
+    <string name="state_connecting">Connecting to the download server\nडाउनलोड सर्वर से कनेक्ट किया जा रहा है।</string>
+    <string name="state_downloading">Downloading resources\nफ़ाइलें डाउनलोड हो रही हैं।</string>
+    <string name="state_completed">Download finished\nडाउनलोड समाप्त।</string>
+    <string name="state_paused_network_unavailable">Download paused because no network is available\nकोई नेटवर्क उपलब्ध नहीं होने के कारण डाउनलोड को रोक दिया गया है।</string>
+    <string name="state_paused_network_setup_failure">Download paused. Test a website in browser\nडाउनलोड को रोक दिया गया है। ब्राउज़र में एक वेबसाइट का परीक्षण करें।</string>
+    <string name="state_paused_by_request">Download paused\nडाउनलोड रोका गया है</string>
+    <string name="state_paused_wifi_unavailable">Download paused because wifi is unavailable\nडाउनलोड रोका गया क्योंकि वाईफाई अनुपलब्ध है।</string>
+    <string name="state_paused_wifi_disabled">Download paused because wifi is disabled\nडाउनलोड रोका गया क्योंकि वाईफाई बंद है।</string>
+    <string name="state_paused_roaming">Download paused because you are on roaming\nडाउनलोड रोका गया क्योंकि आप रोमिंग पर है।</string>
+    <string name="state_paused_sdcard_unavailable">Download paused because the external storage is unavailable\nडाउनलोड रोका गया क्योंकि मेमरी कार्ड अनुपलब्ध है।</string>
+    <string name="state_failed_unlicensed">Download failed because you may not have purchased this app\nडाउनलोड फेल हो गया क्योंकि आपने यह ऐप नहीं खरीदा होगा।</string>
+    <string name="state_failed_fetching_url">Download failed because the resources could not be found\nडाउनलोड फेल हो गया क्योंकि फ़ाइलें नहीं मिल सकीं।</string>
+    <string name="state_failed_sdcard_full">Download failed because the external storage is full\nडाउनलोड फेल हो गया क्योंकि मेमोरी कार्ड भर गया है।</string>
+    <string name="state_failed_cancelled">Download cancelled\nडाउनलोड रद्द किया गया है।</string>
+    <string name="status">Status\nस्थिति</string>
+    <string name="text_button_cancel">Cancel\nरद्द करें</string>
+    <string name="text_button_cancel_verify">Cancel Verification\nजाँच रद्द करें</string>
+    <string name="text_button_pause">Pause Download\nडाउनलोड रोकें</string>
+    <string name="text_button_resume">Resume Download\nडाउनलोड फिर से शुरू करें</string>
+    <string name="text_button_resume_cellular">Resume download\nडाउनलोड फिर से शुरू करें</string>
+    <string name="text_button_wifi_settings">Wi-Fi settings\nवाईफाई सेटिंग्स</string>
+    <string name="text_paused_cellular">Would you like to enable downloading over cellular connections? Depending on your data plan, this may cost you money.\nक्या आप सेलुलर कनेक्शन पर डाउनलोड चालू करना चाहते हैं? आपके डेटा प्लान के आधार पर, इससे आपको पैसे खर्च करने पड़ सकते हैं।</string>
+    <string name="text_paused_cellular_2">If you choose not to enable downloading over cellular connections, the download will automatically resume when wi-fi is available.\nअगर आप सेलुलर कनेक्शन पर डाउनलोड करने को नहीं चुनते हैं, तो वाई-फाई उपलब्ध होने पर डाउनलोड सस्वयं शुरू हो जाएगा।</string>
+    <string name="text_verifying_download">Verifying Download\nडाउनलोड की जाँच की जा रही है।</string>
+    <string name="text_validation_complete">XAPK File Validation Complete.  Select OK to exit.\nXAPK फ़ाइल की मान्यता सफल रही। बाहर जाने के लिए OK को टैप करें।</string>
+    <string name="text_validation_failed">XAPK File Validation Failed.\nXAPK फ़ाइल की मान्यता फेल हुई।</string>
+    <string name="time_remaining">Time remaining:\nबचा हुआ समय: %1$s</string>
     <string name="time_remaining_notification">%1$s left</string>
 </resources>

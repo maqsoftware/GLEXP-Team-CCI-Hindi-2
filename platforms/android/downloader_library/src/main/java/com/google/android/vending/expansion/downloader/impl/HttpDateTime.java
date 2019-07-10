@@ -53,18 +53,6 @@ public final class HttpDateTime {
     private static final Pattern HTTP_DATE_ANSIC_PATTERN =
             Pattern.compile(HTTP_DATE_ANSIC_REGEXP);
 
-    private static class TimeOfDay {
-        TimeOfDay(int h, int m, int s) {
-            this.hour = h;
-            this.minute = m;
-            this.second = s;
-        }
-
-        int hour;
-        int minute;
-        int second;
-    }
-
     public static long parse(String timeString)
             throws IllegalArgumentException {
 
@@ -196,5 +184,16 @@ public final class HttpDateTime {
                 + (timeString.charAt(i++) - '0');
 
         return new TimeOfDay(hour, minute, second);
+    }
+
+    private static class TimeOfDay {
+        int hour;
+        int minute;
+        int second;
+        TimeOfDay(int h, int m, int s) {
+            this.hour = h;
+            this.minute = m;
+            this.second = s;
+        }
     }
 }
