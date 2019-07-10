@@ -516,7 +516,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
     public static class XAPKFile {
         public final boolean mIsMain;
         public final int mFileVersion;
-        final long mFileSize;
+        public final long mFileSize;
 
         XAPKFile(boolean isMain, int fileVersion, long fileSize) {
             mIsMain = isMain;
