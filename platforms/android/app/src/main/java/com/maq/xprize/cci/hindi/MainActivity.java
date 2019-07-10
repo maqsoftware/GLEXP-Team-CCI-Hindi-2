@@ -19,6 +19,8 @@
 
 package com.maq.xprize.cci.hindi;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -28,6 +30,8 @@ import org.apache.cordova.CordovaActivity;
 import java.io.File;
 
 public class MainActivity extends CordovaActivity {
+    AudioManager audioManager;                                                                      //declaring audio manager object
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,5 +51,10 @@ public class MainActivity extends CordovaActivity {
         // update file path as per the storage preference
         launchUrl = "file:///" + SplashScreenActivity.assetsPath + File.separator + "www/index.html";
         loadUrl(launchUrl);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);                                                                           //maximum value of stream media.
+        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < maxVolume / 2) {                  //check if the audio is less than 50%
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume / 2, 0); //set the audio to 50% when app start.
+        }
     }
 }
