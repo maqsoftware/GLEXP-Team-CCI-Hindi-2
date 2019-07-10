@@ -40,8 +40,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.zip.CRC32;
 
-import static java.lang.String.*;
-
 
 public class DownloadExpansionFile extends Activity implements IDownloaderClient {
     /**
@@ -487,7 +485,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
 
         mPB.setMax((int) (progress.mOverallTotal >> 8));
         mPB.setProgress((int) (progress.mOverallProgress >> 8));
-        mProgressPercent.setText(String.format(Locale.US,"%d%%", progress.mOverallProgress
+        mProgressPercent.setText(String.format(Locale.US, "%d%%", progress.mOverallProgress
                 * 100 /
                 progress.mOverallTotal));
         mProgressFraction.setText(Helpers.getDownloadProgressString
