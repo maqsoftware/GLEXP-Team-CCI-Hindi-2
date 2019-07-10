@@ -493,17 +493,6 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                         progress.mOverallTotal));
     }
 
-    /*
-    private Bitmap getBitmapFromAsset(String strName) {
-        try {
-            AssetManager assetManager = getAssets();
-            InputStream istr = assetManager.open(strName);
-             return BitmapFactory.decodeStream(istr);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    */
 
     /**
      * This is a little helper class that demonstrates simple testing of an
