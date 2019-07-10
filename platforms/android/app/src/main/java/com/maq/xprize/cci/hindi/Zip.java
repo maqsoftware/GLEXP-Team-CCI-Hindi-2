@@ -19,21 +19,19 @@ import static com.maq.xprize.cci.hindi.SplashScreenActivity.sharedPref;
 
 class Zip {
 
+    private static int count = 0;
     private ZipFile zipFileHandler;
     private TextView percentText;
     private Activity zipActivity;
-    private static int count = 0;
 
     public Zip(ZipFile zipFile, Activity _activity) {
         this.zipFileHandler = zipFile;
         zipActivity = _activity;
     }
 
-    /*
     public Zip(String pathToZipFile) throws IOException {
         this.zipFileHandler = new ZipFile(pathToZipFile);
     }
-    */
 
     public void close() throws IOException {
         zipFileHandler.close();
@@ -47,7 +45,6 @@ class Zip {
         ZipEntry zipEntry;
         File outputFile;
         File outputDir;
-        File flagFile;
         BufferedInputStream inputStream;
         BufferedOutputStream outputStream;
         boolean isExtractionSuccessful = false;
@@ -110,9 +107,7 @@ class Zip {
         SharedPreferences.Editor editor = sharedPref.edit();
         if (isExtractionSuccessful) {
             if (isMain) {
-                flagFile = new File(targetDir.getPath() +"/"+ ".success.txt");
-                boolean isFileCreated=flagFile.createNewFile();
-                if(isFileCreated) editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
+                editor.putInt(zipActivity.getString(R.string.mainFileVersion), fileVersion);
             } else {
                 editor.putInt(zipActivity.getString(R.string.patchFileVersion), fileVersion);
             }

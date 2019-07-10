@@ -20,15 +20,18 @@
 package com.maq.xprize.cci.hindi;
 
 import android.content.Context;
-import android.graphics.Point;
+import android.media.AudioManager;
 import android.os.Bundle;
-import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import org.apache.cordova.CordovaActivity;
 
+import java.io.File;
+
 public class MainActivity extends CordovaActivity {
+    AudioManager audioManager;                                                                      //declaring audio manager object
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,22 +42,19 @@ public class MainActivity extends CordovaActivity {
         if (extras != null && extras.getBoolean("cdvStartInBackground", false)) {
             moveTaskToBack(true);
         }
-
         // web settings to set the correct view port
-        WindowManager windowManager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
-        Point sizeScreen = new Point();
-        windowManager.getDefaultDisplay().getRealSize(sizeScreen);
-        int width = sizeScreen.x;
+        WebView webView = (WebView) appView.getView();
+        WebSettings settings = webView.getSettings();
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
 
-        // use the scale properties only if device is not Google Pixel C tab dimensions
-        if (width != 2560) {
-            WebView webView = (WebView) appView.getView();
-            WebSettings settings = webView.getSettings();
-            settings.setLoadWithOverviewMode(true);
-            settings.setUseWideViewPort(true);
-        }
-
-        // updated the launchUrl value
+        // update file path as per the storage preference
+        launchUrl = "file:///" + SplashScreenActivity.assetsPath + File.separator + "www/index.html";
         loadUrl(launchUrl);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);                                                                           //maximum value of stream media.
+        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < maxVolume / 2) {                  //check if the audio is less than 50%
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume / 2, 0); //set the audio to 50% when app start.
+        }
     }
 }

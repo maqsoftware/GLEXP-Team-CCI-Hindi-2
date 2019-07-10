@@ -19,7 +19,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.vending.expansion.zipfile.ZipResourceFile;
-import com.maq.xprize.cci.hindi.R;
 import com.google.android.vending.expansion.downloader.Constants;
 import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
 import com.google.android.vending.expansion.downloader.DownloaderClientMarshaller;
@@ -29,6 +28,7 @@ import com.google.android.vending.expansion.downloader.IDownloaderClient;
 import com.google.android.vending.expansion.downloader.IDownloaderService;
 import com.google.android.vending.expansion.downloader.IStub;
 import com.maq.xprize.cci.hindi.MainActivity;
+import com.maq.xprize.cci.hindi.R;
 import com.services.ExpansionDownloaderService;
 
 import java.io.DataInputStream;
@@ -55,13 +55,8 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
     public static final XAPKFile[] xAPKs = {
             new XAPKFile(
                     true, // true signifies a main file
-                    3, // the version of the APK that the file was uploaded
-                    2030178927L // the length of the file in bytes
-            ),
-            new XAPKFile(
-                    false,
-                    0,
-                    4910L
+                    5, // the version of the APK that the file was uploaded
+                    1264965540L // the length of the file in bytes
             )
     };
     /* expansion service*/

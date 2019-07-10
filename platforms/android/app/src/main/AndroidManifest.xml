@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maq.xprize.cci.hindi"
     android:hardwareAccelerated="true"
-    android:versionCode="3"
-    android:versionName="4.0.0">
+    android:installLocation="preferExternal"
+    android:versionCode="5"
+    android:versionName="4.0.2">
+
     <uses-sdk android:targetSdkVersion="28" />
 
     <supports-screens
@@ -17,17 +19,15 @@
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
-        android:supportsRtl="true">
+        android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen">
         <activity
             android:name="MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale"
-            android:screenOrientation="sensorLandscape"
             android:label="@string/activity_name"
             android:launchMode="singleTop"
+            android:screenOrientation="sensorLandscape"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
-            android:windowSoftInputMode="adjustResize">
-        </activity>
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name="SplashScreenActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
@@ -55,5 +55,4 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 </manifest>
