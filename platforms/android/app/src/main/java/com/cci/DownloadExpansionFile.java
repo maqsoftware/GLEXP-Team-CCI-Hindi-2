@@ -5,9 +5,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -37,9 +34,10 @@ import com.services.ExpansionDownloaderService;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.zip.CRC32;
 
 
@@ -88,11 +86,11 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
     private boolean mCancelValidation;
 
     // For to Delete the directory inside list of files and inner Directory
-    public static boolean deleteDir(File dir) {
+    private static boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
+            for (String child : children) {
+                boolean success = deleteDir(new File(dir, child));
                 if (!success) {
                     return false;
                 }
@@ -108,19 +106,20 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
         super.onCreate(savedInstanceState);
 
         vContext = this;
-        /**
-         * Both downloading and validation make use of the "download" UI
+        /*
+          Both downloading and validation make use of the "download" UI
          */
         initializeDownloadUI();
 
 
-        /**
-         * Before we do anything, are the files we expect already here and
-         * delivered (presumably by Market) For free titles, this is probably`
-         * worth doing. (so no Market request is necessary)
+        /*
+          Before we do anything, are the files we expect already here and
+          delivered (presumably by Market) For free titles, this is probably`
+          worth doing. (so no Market request is necessary)
          */
         if (!expansionFilesDelivered()) {
-            String pathname = this.getExternalFilesDir(null).toString() + File.separator + "audio";
+            String pathname;
+            pathname = Objects.requireNonNull(this.getExternalFilesDir(null)).toString() + File.separator + "audio";
 
             File deleteFolder = new File(pathname);
             if (deleteFolder.isDirectory()) {
@@ -157,7 +156,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                     // The DownloaderService has started downloading the files,
                     // show progress
                     initializeDownloadUI();
-                    return;
+
 
                 } // otherwise, download not needed so we fall through to
                 // starting the movie
@@ -202,25 +201,16 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
         mProgressImage.setY(120);
         mProgressImage.invalidate();
 
-        mPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mStatePaused) {
-                    mRemoteService.requestContinueDownload();
-                } else {
-                    mRemoteService.requestPauseDownload();
-                }
-                setButtonPausedState(!mStatePaused);
+        mPauseButton.setOnClickListener(view -> {
+            if (mStatePaused) {
+                mRemoteService.requestContinueDownload();
+            } else {
+                mRemoteService.requestPauseDownload();
             }
+            setButtonPausedState(!mStatePaused);
         });
 
-        mWiFiSettingsButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
-            }
-        });
+        mWiFiSettingsButton.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)));
     }
 
     /**
@@ -234,7 +224,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
      *
      * @return true if they are present.
      */
-    boolean expansionFilesDelivered() {
+    private boolean expansionFilesDelivered() {
         for (XAPKFile xf : xAPKs) {
             String fileName = Helpers.getExpansionAPKFileName(this, xf.mIsMain, xf.mFileVersion);
             if (Helpers.doesFileExist(this, fileName, xf.mFileSize, false)) {
@@ -302,9 +292,6 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                 indeterminate = false;
                 break;
             case IDownloaderClient.STATE_COMPLETED:
-                showDashboard = false;
-                paused = false;
-                indeterminate = false;
                 validateXAPKZipFiles();
                 return;
             default:
@@ -339,7 +326,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
      *
      * @return true if XAPKZipFile is successful
      */
-    void validateXAPKZipFiles() {
+    private void validateXAPKZipFiles() {
         AsyncTask<Object, DownloadProgressInfo, Boolean> validationTask = new AsyncTask<Object, DownloadProgressInfo, Boolean>() {
 
             @Override
@@ -359,8 +346,8 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                     try {
                         zrf = new ZipResourceFile(fileName);
                         ZipResourceFile.ZipEntryRO[] entries = zrf.getAllEntries();
-                        /**
-                         * First calculate the total compressed length
+                        /*
+                          First calculate the total compressed length
                          */
                         long totalCompressedLength = 0;
                         for (ZipResourceFile.ZipEntryRO entry : entries) {
@@ -369,20 +356,18 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                         float averageVerifySpeed = 0;
                         long totalBytesRemaining = totalCompressedLength;
                         long timeRemaining;
-                        /**
-                         * Then calculate a CRC for every file in the Zip file,
-                         * comparing it to what is stored in the Zip directory.
-                         * Note that for compressed Zip files we must extract
-                         * the contents to do this comparison.
+                        /*
+                          Then calculate a CRC for every file in the Zip file,
+                          comparing it to what is stored in the Zip directory.
+                          Note that for compressed Zip files we must extract
+                          the contents to do this comparison.
                          */
                         for (ZipResourceFile.ZipEntryRO entry : entries) {
                             if (-1 != entry.mCRC32) {
                                 long length = entry.mUncompressedLength;
                                 CRC32 crc = new CRC32();
-                                DataInputStream dis = null;
-                                try {
-                                    dis = new DataInputStream(
-                                            zrf.getInputStream(entry.mFileName));
+                                try (DataInputStream dis = new DataInputStream(
+                                        zrf.getInputStream(entry.mFileName))) {
 
                                     long startTime = SystemClock.uptimeMillis();
                                     while (length > 0) {
@@ -427,10 +412,6 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                                                 "In file: " + entry.getZipFileName());
                                         return false;
                                     }
-                                } finally {
-                                    if (null != dis) {
-                                        dis.close();
-                                    }
                                 }
                             }
                         }
@@ -451,12 +432,7 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                 mDashboard.setVisibility(View.VISIBLE);
                 mCellMessage.setVisibility(View.GONE);
                 mStatusText.setText(null);
-                mPauseButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        mCancelValidation = true;
-                    }
-                });
+                mPauseButton.setOnClickListener(view -> mCancelValidation = true);
                 mPauseButton.setText(null);
                 super.onPreExecute();
             }
@@ -469,25 +445,14 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
                     mStatusText.setText(null);
                     Intent intent = new Intent(vContext, MainActivity.class);
                     startActivity(intent);
-                    mPauseButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            finish();
-                        }
-                    });
+                    mPauseButton.setOnClickListener(view -> finish());
                     mPauseButton.setText(android.R.string.ok);
 
                 } else {
                     mDashboard.setVisibility(View.VISIBLE);
                     mCellMessage.setVisibility(View.GONE);
                     mStatusText.setText(null);
-                    mPauseButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-
-                            finish();
-                        }
-                    });
+                    mPauseButton.setOnClickListener(view -> finish());
                     mPauseButton.setText(android.R.string.cancel);
 
                 }
@@ -518,27 +483,16 @@ public class DownloadExpansionFile extends Activity implements IDownloaderClient
         mTimeRemaining.setText(getString(R.string.time_remaining,
                 Helpers.getTimeRemaining(progress.mTimeRemaining)));
 
-        progress.mOverallTotal = progress.mOverallTotal;
         mPB.setMax((int) (progress.mOverallTotal >> 8));
         mPB.setProgress((int) (progress.mOverallProgress >> 8));
-        mProgressPercent.setText(progress.mOverallProgress
+        mProgressPercent.setText(String.format(Locale.US, "%d%%", progress.mOverallProgress
                 * 100 /
-                progress.mOverallTotal + "%");
+                progress.mOverallTotal));
         mProgressFraction.setText(Helpers.getDownloadProgressString
                 (progress.mOverallProgress,
                         progress.mOverallTotal));
     }
 
-    private Bitmap getBitmapFromAsset(String strName) {
-        try {
-            AssetManager assetManager = getAssets();
-            InputStream istr = assetManager.open(strName);
-            Bitmap bitmap = BitmapFactory.decodeStream(istr);
-            return bitmap;
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     /**
      * This is a little helper class that demonstrates simple testing of an

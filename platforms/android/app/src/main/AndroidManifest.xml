@@ -37,6 +37,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.cci.DownloadExpansionFile" />
 
         <provider
             android:name="org.apache.cordova.camera.FileProvider"

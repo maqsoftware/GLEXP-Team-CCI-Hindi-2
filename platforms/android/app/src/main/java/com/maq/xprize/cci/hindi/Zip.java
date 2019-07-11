@@ -17,7 +17,7 @@ import java.util.zip.ZipFile;
 
 import static com.maq.xprize.cci.hindi.SplashScreenActivity.sharedPref;
 
-public class Zip {
+class Zip {
 
     private static int count = 0;
     private ZipFile zipFileHandler;
@@ -67,11 +67,9 @@ public class Zip {
             // Sync the progress bar with percentage value
             progressBar.setProgress(percent);
             final int finalPercent = percent;
-            zipActivity.runOnUiThread(new Runnable() {
-                public void run() {
-                    // Show the percentage value on progress bar
-                    percentText.setText(MessageFormat.format("{0} %", finalPercent));
-                }
+            zipActivity.runOnUiThread(() -> {
+                // Show the percentage value on progress bar
+                percentText.setText(MessageFormat.format("{0} %", finalPercent));
             });
 
             zipEntry = zipEntries.nextElement();
