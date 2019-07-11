@@ -3,8 +3,8 @@
     package="com.maq.xprize.cci.hindi"
     android:hardwareAccelerated="true"
     android:installLocation="preferExternal"
-    android:versionCode="5"
-    android:versionName="4.0.2">
+    android:versionCode="6"
+    android:versionName="4.0.3">
 
     <supports-screens
         android:anyDensity="true"
